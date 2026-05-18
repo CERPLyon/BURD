@@ -21,8 +21,10 @@ load("data/data_PCR_NDA.RData")
 ntr = 100
 nrounds = 5000
 p_training = 0.7
+  
 
-# virus_index = 7
+# virus_index = 1
+ncv = NULL
 NDA_virus_prediction = NULL
 for(virus_index in 1:11){
   
@@ -30,9 +32,30 @@ for(virus_index in 1:11){
   # source("BURD2.2_prep_rf.R") #this ensures that the data prep is the same as in the actual training script
   source("b2.2_prep_xg.R") #this ensures that the data prep is the same as in the actual training script
   
+  load(file = paste0("ml/cvXG_", output_stem, ".RData"), verbose = T)
+  
+  # print(ncv_out$results)
+  # print(ncv_out$baseline)
+  
+  
+  ncv_piece <- ncv_out$results %>% 
+    summarise(Virus = output_stem, baseline = ncv_out$baseline, mean_prauc = mean(aucpr), sd_prauc = sd(aucpr))
+  if(is.null(ncv)){
+    ncv = ncv_piece
+  } else {
+    ncv = rbind(ncv, ncv_piece)
+  }
+  if(virus_index == 11){
+    ncv %>% write_csv2("output/ncv.csv")
+  }
+  # next
+  # print("shouldn't print this")
+  
   # load rf trained model
   # load(file = paste0("rf/train_", output_stem, ".RData"), verbose = T)
   load(file = paste0("ml/trainXG_", output_stem, ".RData"), verbose = T)
+  xgb.save(xg_out, fname = paste0("ml/trainXG_", output_stem, ".ubj"))
+  xg_out <- xgb.load(modelfile = paste0("ml/trainXG_", output_stem, ".ubj"))
   
   # predict for all NDAs
   # prediction_allNDA <- predict(rf_out, newdata = data_NDA_thisVirus, type = "prob")[, "1"]
@@ -168,7 +191,7 @@ data_PCR_NDA %>%
   {rbind(., untested_IPP_prediction %>% 
            ungroup %>% 
            transmute(NDA_pseudo, Virus, prediction, TestPos = "Unknown"))} %>% 
-  mutate(Virus = factor(Virus, levels = gsub("/", "", virus_order))) %>% 
+  mutate(Virus = factor(Virus, levels = virus_vec)) %>% 
   filter(Virus != "InfluenzaNT") %>% 
   ggplot(aes(x = prediction, group = TestPos, fill = TestPos)) + 
   geom_histogram(aes(y = after_stat(density)), alpha = 0.5, position = "identity") + 
@@ -194,16 +217,18 @@ for(virus_index in 1:11){
   this_string = virus_index*nrounds
   
   output_stem = paste(this_virus)
-  
+  print(output_stem)
   # load rf trained model
   # load(file = paste0("rf/train_", output_stem, ".RData"), verbose = T)
-  load(file = paste0("ml/trainXG_", output_stem, ".RData"), verbose = T)
+  # load(file = paste0("ml/trainXG_", output_stem, ".RData"), verbose = T)
+  xg_out <- xgb.load(modelfile = paste0("ml/trainXG_", output_stem, ".ubj"))
   
   dt_piece = xgb.importance(model = xg_out)
   dt_piece[, Virus := this_virus][, rank := 1:nrow(dt_piece)]
   
   if(is.null(dt)){
     dt = dt_piece
+  } else {
     dt = rbind(dt, dt_piece)
   }
   

@@ -56,13 +56,14 @@ if(F){ # use this to do a partial loop
   # for(this_virus in virus_order[!(virus_order %in% virus_done)]){
 }
 
-this_virus = virus_order[4]
-for(this_virus in setdiff(virus_order, "InfluenzaNT")){
+this_virus = virus_vec[4]
+# for(this_virus in setdiff(virus_order, "InfluenzaNT")){
+for(this_virus in virus_vec){
 
     print(this_virus)
   
   this_virus_filename = gsub("/", "", this_virus) #remove slash from Enterovirus/Rhinovirus
-  this_seed = which(virus_order == this_virus)
+  this_seed = which(virus_vec == this_virus)
   set.seed(this_seed)
   
   print("get master dataset")
@@ -287,10 +288,10 @@ for(this_virus in setdiff(virus_order, "InfluenzaNT")){
   
 } #end of virus loop
 
-data_PCR_sejour %>%
+data_PCR_sejour_age %>%
   filter(resultatbis %in% c("POSITIVE", "NEGATIVE")) %>%
   filter(testday < big_day_limit) %>%
-  mutate(Virus = factor(Virus, virus_order)) %>%
+  mutate(Virus = factor(Virus, virus_vec_slash)) %>%
   group_by(Virus, IPP_sejour) %>%
   summarise(knownCommunity = as.numeric(any((testday < acute_day_limit) & resultatbis == "POSITIVE")),
          probableCommunity = as.numeric(any((testday >= acute_day_limit & testday < 7) & resultatbis == "POSITIVE")) & (!knownCommunity) 
@@ -321,6 +322,7 @@ data_PCR_sejour_collapseSubtypes %>%
                         # model = prev*(1-(1-seij)*(1-falsPos)) 
                         model = seij, falsPos
                         )) %>%
+  mutate(Virus = factor(Virus, virus_vec_slash)) %>%
   ggplot(aes(x = testday)) +
   geom_point(aes(y = p_pos, size = total)) +
   geom_line(aes(y = model, colour = "Community infection"), linetype = "dashed", size = 1) +
@@ -332,11 +334,11 @@ data_PCR_sejour_collapseSubtypes %>%
   coord_cartesian(ylim = c(0, 1))
 
 # ggsave("plots/data_knownCommunity.png", width = 20, height = 14, units = "cm")
-ggsave("plots/data_model_knownCommunity.png", width = 22, height = 14, units = "cm")
+ggsave("output/plots/data_model_knownCommunity.png", width = 22, height = 14, units = "cm")
 
 
 
-data_PCR_sejour %>%
+data_PCR_sejour_age %>%
   filter(Virus != "InfluenzaNT") %>%
   filter(testday < big_day_limit) %>%
   # filter(Virus == this_virus) %>%
@@ -353,6 +355,7 @@ data_PCR_sejour %>%
                         # model = prev*(1-(1-seij)*(1-falsPos)) 
                         model = seij, falsPos
               )) %>%
+  mutate(Virus = factor(Virus, virus_vec_slash)) %>%
   ggplot(aes(x = testday)) +
   geom_point(aes(y = p_pos, size = total)) +
   geom_line(aes(y = model, colour = "Community infection"), linetype = "dashed", size = 1) +
@@ -363,29 +366,7 @@ data_PCR_sejour %>%
   theme_bw() #+ 
   # coord_cartesian(ylim = c(0, 0.4))
 
-# ggsave("plots/data_all.png", width = 20, height = 14, units = "cm")
-
-
-data_PCR_sejour %>%
-  filter(Virus != "InfluenzaNT") %>%
-  filter(testday < big_day_limit) %>%
-  # filter(Virus == this_virus) %>%
-  filter(resultatbis %in% c("POSITIVE", "NEGATIVE")) %>% 
-  transmute(Virus, patient_id = IPP_sejour, testday, y = (0:1)[match(resultatbis, c("NEGATIVE", "POSITIVE"))]) %>% 
-  group_by(Virus, patient_id) %>% 
-  summarise(knownCommunity = as.numeric(any(testday < acute_day_limit & y == 1)), 
-            probableCommunity = as.numeric(any(testday >= acute_day_limit & testday < 7 & y == 1))) %>% 
-  left_join(estStatus) %>% 
-  group_by(Virus) %>% 
-  summarise(confirmed = sum(knownCommunity), 
-            correctedProbable = sum(case_when(knownCommunity == 1 ~ 1, 
-                                              probableCommunity == 1 ~ p_infected, 
-                                              T ~ 0)),
-            correctedAll = sum(ifelse(knownCommunity == 1, 1, p_infected))
-  ) %>% 
-  pivot_longer(-Virus) %>% 
-  mutate(Virus = factor(Virus, virus_order)) %>% 
-  ggplot(aes(x = Virus, fill = name, y = value)) + geom_bar(stat = "identity", position = "dodge")
+ggsave("output/plots/data_model_knownCommunity_wholeSample.png", width = 22, height = 14, units = "cm")
 
 
 

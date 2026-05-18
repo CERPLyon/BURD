@@ -7,18 +7,25 @@ library(Matrix)
 library(tidyverse)
 library(caret)
 library(xgboost)
+library(PRROC)
+
+source("xgb_ncv.R")
 
 # library(randomForest)
 
 print("getting control variables")
-cmds = as.numeric(commandArgs(trailingOnly = T))
-virus_index = cmds[1]
-nrounds = cmds[2]
-execute_only = F
-# nrounds = 5000
-# optimise = (cmds[2] == "optimise")
+cmds = commandArgs(trailingOnly = T)
+virus_index = as.numeric(cmds[1])
+nrounds = as.numeric(cmds[2])
+optimise = (cmds[3] == "optimise")
+auc = (cmds[4] == "auc")
+execute = (cmds[5] == "execute")
 # virus_index = 9
-# optimise = T
+# nrounds = 5000
+# execute_only = F
+
+# print(cmds)
+# print(c(virus_index, nrounds, execute_only))
 
 p_training = 0.7
 
@@ -38,7 +45,7 @@ print("source prep file")
 source("b2.2_prep_xg.R")
 
 
-if(!execute_only){
+if(optimise){
   print("optimise XGBoost")
   
   data_NDA_sparse_testResult_xgb.D <- xgb.DMatrix(data_NDA_sparse_testResult[, -1], 
@@ -78,6 +85,7 @@ if(!execute_only){
       verbose = F
     )
     
+    
     mean_auc <- max(cv_results$evaluation_log$test_logloss_mean)
     
     if (mean_auc > best_auc) {
@@ -96,26 +104,41 @@ if(!execute_only){
 
 load(file = paste0("ml/optmiseXG_", output_stem, ".RData"))
 
-print("run XGBoost")
-xg_out <- xgboost(x = data_NDA_sparse_train[, -1], 
-                  y = factor(data_NDA_sparse_train[, 1], levels = c(0, 1)), 
-                  # xgb_model = bstSparse,
-                  # objective = "binary:logistic",
-                  params = best_params, 
-                  nrounds = best_nrounds,
-                  # max_depth = 10, 
-                  # nthreads = 2, 
-                  # min_child_weight = 1, 
-                  # objective = "binary:logistic", 
-                  
-                  # params = xgparams, 
-                  verbosity = 1
-)
+if(auc){
+  ncv_out <- xgb.ncv_wrapper(x = data_NDA_sparse_testResult[, -1], 
+                             y = data_NDA_sparse_testResult[, 1], 
+                             params = best_params, 
+                             nrounds = best_nrounds, 
+                             k_folds = 10, 
+                             n_repeats = 5
+  )
+  print(paste0("AUC: ", paste0(ncv_out$auc, collapse = "\n"), " - baseline: ", ncv_out$baseline))
+  
+  print("save cross-validation results")
+  save(ncv_out, file = paste0("ml/cvXG_", output_stem, ".RData"))
+}
 
-
-print("save training object")
-save(xg_out, file = paste0("ml/trainXG_", output_stem, ".RData"))
-
+if(execute){
+  print("run XGBoost")
+  xg_out <- xgboost(x = data_NDA_sparse_train[, -1], 
+                    y = factor(data_NDA_sparse_train[, 1], levels = c(0, 1)), 
+                    # xgb_model = bstSparse,
+                    # objective = "binary:logistic",
+                    params = best_params, 
+                    nrounds = best_nrounds,
+                    # max_depth = 10, 
+                    # nthreads = 2, 
+                    # min_child_weight = 1, 
+                    # objective = "binary:logistic", 
+                    
+                    # params = xgparams, 
+                    verbosity = 1
+  )
+  
+  
+  print("save training object")
+  save(xg_out, file = paste0("ml/trainXG_", output_stem, ".RData"))
+}
 
 
 print("end")

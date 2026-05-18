@@ -59,5 +59,5 @@ testday_bardata %>%
   scale_fill_manual(values = c(NEGATIVE = "skyblue3", POSITIVE = "red")) + 
   facet_wrap(.~Virus, scale = "free_y")
 
-ggsave(filename = "BURD/testday_problem.png", width = 24, height = 16, units = "cm")
+ggsave(filename = "plots/testday_problem.png", width = 24, height = 16, units = "cm")
 
