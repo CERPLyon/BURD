@@ -26,15 +26,19 @@ data_bact_cleaned <- data_bact %>%
 # data_bact_cleaned %>% 
   
 
-data_bact_cleaned %>% 
-  select(taxon_code, raw_taxon_label, taxon_label) %>% unique %>% 
-  arrange(taxon_label) %>% 
-  View
+# data_bact_cleaned %>% 
+#   select(taxon_code, raw_taxon_label, taxon_label) %>% unique %>% 
+#   arrange(taxon_label) %>% 
+#   View
 
 
 
 species_threshold = 100
 genus_threshold = 100
+
+data_bact_cleaned %>% 
+  group_by(sample_type1, sample_type2) %>% 
+  summarise(n = n())
 
 species_list = data_bact_cleaned %>% 
   filter(sample_type1 == "BPO") %>%
@@ -77,12 +81,16 @@ bact_BPOpresent_NDA <- data_bact_classified %>%
              select(., NDA_pseudo, IPP_sejour, classification) %>% filter(!is.na(classification)))} %>% 
   mutate(classification = replace_na(classification, "BACTERIA ALLNEGATIVE"))
 
-
-bact_BPOpresent_NDA %>% 
-  group_by(classification) %>% 
-  summarise(n = n_distinct(NDA_pseudo)) %>% 
+bact_BPOpresent_NDA %>% group_by(classification) %>% 
+  summarise(n = n()) %>% 
   arrange(-n) %>% 
-  View
+  print(n = 300)
+
+# bact_BPOpresent_NDA %>% 
+#   group_by(classification) %>% 
+#   summarise(n = n_distinct(NDA_pseudo)) %>% 
+#   arrange(-n) %>% 
+#   View
 
 bact_BPOpresent_NDA_wide <- bact_BPOpresent_NDA %>% 
   select(NDA_pseudo, IPP_sejour, classification) %>% unique %>% 

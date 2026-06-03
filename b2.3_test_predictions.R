@@ -26,7 +26,7 @@ p_training = 0.7
 # virus_index = 1
 ncv = NULL
 NDA_virus_prediction = NULL
-for(virus_index in 1:11){
+for(virus_index in 1:9){
   
   gc()  
   # source("BURD2.2_prep_rf.R") #this ensures that the data prep is the same as in the actual training script
@@ -45,10 +45,10 @@ for(virus_index in 1:11){
   } else {
     ncv = rbind(ncv, ncv_piece)
   }
-  if(virus_index == 11){
-    ncv %>% write_csv2("output/ncv.csv")
-  }
-  # next
+  ncv %>% write_csv2("output/tables/ncv.csv")
+  
+#   next
+# }
   # print("shouldn't print this")
   
   # load rf trained model
@@ -174,7 +174,7 @@ untested_IPP_prediction <- NDA_virus_prediction_sejour %>%
   arrange(NDA_startDay, .by_group = T) %>% 
   dplyr::slice(1) %>% 
   select(IPP_sejour, Virus, NDA_pseudo, NDA_startDay, prediction) %>% 
-  left_join(data_PCR_sejour_age %>% 
+  left_join(data_PCR_sejour_collapseSubtypes %>% 
               filter(testday < 7) %>% 
               select(Virus, IPP_sejour) %>% 
               unique %>% 
@@ -199,7 +199,7 @@ data_PCR_NDA %>%
   labs(x = "Predicted probability of positive test", fill = "True test result") + 
   theme_bw()
 
-ggsave("plots/xg_prediction.png", width = 20, height = 12, units = "cm")
+ggsave("output/plots/xg_prediction.png", width = 20, height = 12, units = "cm")
 
 
 
@@ -211,7 +211,7 @@ library(data.table)
 dt = NULL
 
 # virus_index = 2
-for(virus_index in 1:11){
+for(virus_index in 1:9){
   
   this_virus = virus_vec[virus_index]
   this_string = virus_index*nrounds
@@ -244,5 +244,34 @@ dt[, .(ifelse(Virus == shift(Virus, 1, fill = "NA"), "", Virus),
                                          "age_group" ~ "Age group", 
                                          .default = Feature
                    ))][Contribution >= 0.015, ] %>% 
-  # left_join(cim10_ref %>% transmute(Variable = code, Description = cim10_description)) %>% 
-  fwrite("ml/xg_importance.csv", sep = ";")
+  left_join(cim10_ref %>% transmute(Variable = code, Description = cim10_description)) %>%
+  mutate(Description = ifelse(is.na(Description), NA, paste("ICD-10:", Description))) %>% 
+  mutate(Description = gsub(" w ", " with ", Description), 
+         Description = gsub(" oth ", " other ", Description), 
+         Description = gsub(" ident ", " identified ", Description), 
+         Description = gsub(" resp ", " respiratory ", Description), 
+         Description = gsub(" manifest$", " manifestation", Description), 
+         Description = gsub("Chr ", "Chronic ", Description), 
+         Description = gsub(" pulmon ", " pulmonary ", Description), 
+         Description = gsub(" infct", " infection", Description), 
+         Description = gsub("classd", "classified", Description), 
+         Description = gsub("elswhr", "elsewhere", Description)
+         ) %>% 
+  mutate(Description = ifelse(Variable == "relativeWeek", "Week relative to December 31st", Description), 
+         Description = ifelse(Variable == "Season", "September to August", Description), 
+         Description = ifelse(Variable == "Month", "Calendar month", Description), 
+         Description = ifelse(Variable == "catego_UM", "Hospital service category", Description), 
+         Description = ifelse(Variable == "CRP_min", "C-reactive protein - minimum", Description), 
+         Description = ifelse(Variable == "CRP_max", "C-reactive protein - maximum", Description), 
+         Description = ifelse(Variable == "LYMP_min", "Lymphocytes - minimum", Description), 
+         Description = ifelse(Variable == "GLUC_min", "Glucose - minimum", Description), 
+         Description = ifelse(Variable == "GLUC_max", "Glucose - maximum", Description), 
+         Description = ifelse(Variable == "PLAQ_max", "Platelets - maximum", Description), 
+         Description = ifelse(Variable == "NEUT_max", "Neutrophils - maximum", Description), 
+         Description = ifelse(Variable == "GLUC_mean", "Glucose - mean", Description), 
+         Description = ifelse(Variable == "PH_mean", "pH - mean", Description), 
+         Description = ifelse(Variable == "PO2_mean", "pO2 - mean", Description), 
+         Description = ifelse(Variable == "CREA_min", "Creatinine - minimum", Description)) %>% 
+  mutate(Contribution = format(round(Contribution, 3), nsmall = 3)) %>% 
+  fwrite("output/tables/xg_importance.csv", sep = ";")
+

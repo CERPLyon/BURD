@@ -4,10 +4,20 @@ library(data.table)
 
 source("b0.1_get_relativeWeek_relativeDay.R")
 
-virus_vec = c("InfluenzaA", "InfluenzaB", "SARS-CoV-2", "RSV", "hMPV", "Rhinovirus", "EnterovirusRhinovirus", 
-              "Enterovirus", "ADV","PIV","hCoV")
-virus_vec_slash = c("InfluenzaA", "InfluenzaB", "SARS-CoV-2", "RSV", "hMPV", "Rhinovirus", "Enterovirus/Rhinovirus", 
-              "Enterovirus", "ADV","PIV","hCoV")
+# virus_vec = c("InfluenzaA", "InfluenzaB", "SARS-CoV-2", "RSV", "hMPV", "Rhinovirus", "EnterovirusRhinovirus", 
+#               "Enterovirus", "ADV","PIV","hCoV")
+# virus_vec_slash = c("InfluenzaA", "InfluenzaB", "SARS-CoV-2", "RSV", "hMPV", "Rhinovirus", "Enterovirus/Rhinovirus", 
+#               "Enterovirus", "ADV","PIV","hCoV")
+
+# remove(virus_vec)
+# remove(virus_vec_slash)
+
+virus_vec = c("InfluenzaA", "InfluenzaB", "SARS-CoV-2", "RSV", 
+              "hMPV", 
+              "RVEV", 
+              # "Rhinovirus", "EnterovirusRhinovirus", "Enterovirus", 
+              "ADV","PIV","hCoV")
+
 age_vec = c("0-1", "2-4", "5-17", "18-64", "65-79", "80+")
 
 # load the FIRESP data (not the biomarker data until necessary, it's big)
@@ -38,13 +48,15 @@ data_PCR_sejour_age <- data_PCR %>%
   mutate(testday = difftime(date_preleve, date_ent_sejour, units = "days") %>% as.numeric)# %>% 
 
 data_PCR_sejour_collapseSubtypes <- data_PCR_sejour_age %>% 
-  group_by(IPP_alea, IPP_sejour, NDA_pseudo, NDA_pseudo_ordre, Virus, Virus2, season_admitted, year_admitted, week_admitted, pandemic_status, age, age_group, date_ent_sejour, date_preleve, testday, ordre) %>% 
+  filter(Virus != "Enterovirus", Virus != "InfluenzaNT") %>% 
+  mutate(Virus = fct_collapse(Virus, RVEV = c("Rhinovirus", "Enterovirus/Rhinovirus"))) %>% 
+  mutate(Virus = factor(Virus, virus_vec)) %>% 
+  group_by(IPP_alea, IPP_sejour, NDA_pseudo, NDA_pseudo_ordre, Virus, season_admitted, year_admitted, week_admitted, pandemic_status, age, age_group, date_ent_sejour, date_preleve, testday, ordre) %>% 
   summarise(resultatbis = case_when(any(resultatbis == "POSITIVE") ~ "POSITIVE", 
                                     any(resultatbis == "NEGATIVE") ~ "NEGATIVE", 
                                     T ~ "UNINTERPRETABLE"))
 
-# remove(virus_order)
-# remove(virus_order_basic)
+remove(data_PCR_sejour_age)
 
 # virus_order_basic <- data_PCR$Virus %>% table %>% sort(decreasing = T) %>% names
 # virus_order <- paste0(c("Influenza"), c("A", "B", "NT")) %>% {c(., setdiff(virus_order_basic, .))}

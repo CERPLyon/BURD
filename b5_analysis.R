@@ -8,23 +8,27 @@ suspected_day_limit = 7
 
 
 patient_outcomes <- data_sejours %>% 
+  left_join(deathRate_age_SNDS %>% transmute(age_group, DP, deathRate_within30_minusExcess), by = c("age_group", "DP")) %>% 
   group_by(IPP_sejour, age, age_group, 
            # date_ent_sejour, 
            # week_admitted, year_admitted, 
            month_admitted, 
            season_admitted, pandemic_status, type_sej) %>% 
   summarise(
-  # across(c("age", "age_group" 
-                     # "low_birth_weight", "premature", 
-                     # "cardio", "pulmo", "cancer", "tabac", "immudef", "down"
-                     # ), ~.x[1]), 
-            Admission = 1, 
-            across(c("oxy", "VMI", "VMNI", "ECMO"), ~any(.x %in% 1, na.rm = T) %>% as.numeric), 
-            ICU = any(rea_SI %in% 1, na.rm = T) %>% as.numeric, 
-            Death = any(mode_sor %in% "DEATH", na.rm = T) %>% as.numeric
-            # , LoS = duree_sejour[1]
-            ) %>% 
-  ungroup %>% 
+    # across(c("age", "age_group" 
+    # "low_birth_weight", "premature", 
+    # "cardio", "pulmo", "cancer", "tabac", "immudef", "down"
+    # ), ~.x[1]), 
+    Admission = 1, 
+    across(c("oxy", "VMI", "VMNI", "ECMO"), ~any(.x %in% 1, na.rm = T) %>% as.numeric), 
+    ICU = any(rea_SI %in% 1, na.rm = T) %>% as.numeric, 
+    Death = any(mode_sor %in% "DEATH", na.rm = T) %>% as.numeric, 
+    deathRate_within30_minusExcess = max(deathRate_within30_minusExcess, na.rm = T)
+    # , LoS = duree_sejour[1]
+  ) %>% 
+  mutate(Death_plus30 = case_when(Death == 1 ~ 1, 
+                                  is.finite(deathRate_within30_minusExcess) ~ deathRate_within30_minusExcess, 
+                                  T ~ 0)) %>% 
   left_join(data_sejours %>% 
               filter(rea_SI == 1) %>% 
               group_by(IPP_sejour) %>% 
@@ -37,7 +41,7 @@ patient_knownStatus <- data_sejours %>%
   select(IPP_sejour) %>% unique %>% 
   left_join(data_PCR_sejour_collapseSubtypes) %>% 
   select(IPP_sejour, Virus, resultatbis, testday) %>% 
-  mutate(Virus = factor(Virus, levels = virus_order)) %>% 
+  mutate(Virus = factor(Virus, levels = virus_vec)) %>% 
   # filter(IPP_sejour == "10000_1") %>%
   group_by(IPP_sejour, Virus) %>% 
   summarise(test02 = as.numeric(any(testday < acute_day_limit & resultatbis %in% c("POSITIVE", "NEGATIVE"))), 
@@ -69,27 +73,26 @@ patient_outcomes %>%
 estStatus <- read_csv(file = paste0("output/estStatus.csv"))
 
 
-lateCorrection_table <- patient_outcomes %>% 
-  left_join(patient_knownStatus %>% select(IPP_sejour, Virus, test02, test36, knownCommunity, probableCommunity), relationship = "one-to-many") %>% 
-  left_join(estStatus %>% transmute(IPP_sejour = patient_id, Virus, late_infected = p_infected), by = c("IPP_sejour", "Virus"), relationship = "one-to-one") %>% 
-  mutate(Virus = factor(Virus, levels = virus_order)) %>% 
-  mutate(correctedCommunity = case_when(knownCommunity == 1 ~ 1, #ruled in
-                                        test02 == 1 & (knownCommunity == 0)  ~ 0, #ruled out
-                                        (test36 == 1) & (!is.na(late_infected)) ~ late_infected, #inferred
-                                        # (!is.na(p_infected)) ~ p_infected, 
-                                        # (probableCommunity == 1) & (!is.na(p_infected)) ~ p_infected, 
-                                        T ~ 0)) %>% 
-  group_by(Virus
-           # , type_sej, ICU, Death
-  ) %>% 
-  summarise(n_knownCommunity = sum(knownCommunity), n_probableCommunity = sum(probableCommunity), n_lateCorrect = sum(correctedCommunity)) %>% 
-  mutate(lateCorrected = n_lateCorrect - n_knownCommunity) %>% 
-  select(Virus, n_knownCommunity, n_probableCommunity, lateCorrected)
+# lateCorrection_table <- patient_outcomes %>% 
+#   left_join(patient_knownStatus %>% select(IPP_sejour, Virus, test02, test36, knownCommunity, probableCommunity), relationship = "one-to-many") %>% 
+#   left_join(estStatus %>% transmute(IPP_sejour = patient_id, Virus, late_infected = p_infected), by = c("IPP_sejour", "Virus"), relationship = "one-to-one") %>% 
+#   mutate(Virus = factor(Virus, levels = virus_vec)) %>% 
+#   mutate(correctedCommunity = case_when(knownCommunity == 1 ~ 1, #ruled in
+#                                         test02 == 1 & (knownCommunity == 0)  ~ 0, #ruled out
+#                                         (test36 == 1) & (!is.na(late_infected)) ~ late_infected, #inferred
+#                                         # (!is.na(p_infected)) ~ p_infected, 
+#                                         # (probableCommunity == 1) & (!is.na(p_infected)) ~ p_infected, 
+#                                         T ~ 0)) %>% 
+#   group_by(Virus
+#            # , type_sej, ICU, Death
+#   ) %>% 
+#   summarise(n_knownCommunity = sum(knownCommunity), n_probableCommunity = sum(probableCommunity), n_lateCorrect = sum(correctedCommunity)) %>% 
+#   mutate(lateCorrected = n_lateCorrect - n_knownCommunity) %>% 
+#   select(Virus, n_knownCommunity, n_probableCommunity, lateCorrected)
 
 
 # inferred from un-testing
-NDA_virus_prediction_sejour <- read_csv("output/NDA_virus_prediction_sejour.csv") %>% 
-  mutate(Virus = ifelse(Virus == "EnterovirusRhinovirus", "Enterovirus/Rhinovirus", Virus))
+NDA_virus_prediction_sejour <- read_csv("output/NDA_virus_prediction_sejour.csv")
 
 mlPrediction_sejour <- NDA_virus_prediction_sejour %>% 
   filter(NDA_startDay < suspected_day_limit) %>% 
@@ -104,7 +107,7 @@ patient_outcomes_virus_correction <- patient_outcomes %>%
   left_join(patient_knownStatus %>% select(IPP_sejour, Virus, test02, test36, knownCommunity, probableCommunity), relationship = "one-to-many") %>% 
   left_join(estStatus %>% transmute(IPP_sejour = patient_id, Virus, late_infected = p_infected), by = c("IPP_sejour", "Virus"), relationship = "one-to-one") %>% 
   left_join(mlPrediction_sejour %>% transmute(IPP_sejour, Virus, untested_infected = infected_mlPredicted), by = c("IPP_sejour", "Virus"), relationship = "one-to-one") %>% 
-  mutate(Virus = factor(Virus, levels = virus_vec_slash)) %>% 
+  mutate(Virus = factor(Virus, levels = virus_vec)) %>% 
   filter(Virus != "InfluenzaNT") %>% 
   mutate(correctedCommunity_late = case_when(knownCommunity == 1 ~ 1, #if there's a positive test on days 0-2, it's a defined community case
                                         (test02 == 1) & (knownCommunity == 0) ~ 0, #if there's a negative test, it's a non-case
@@ -172,7 +175,21 @@ patient_outcomes_inc_master <- patient_outcomes_virus_correction %>%
                      n_withLate = sum(correctedCommunity_late),
                      n_withLateUntested = sum(correctedCommunity_lateUntested),
                      n_afterCorrection = sum(correctedCommunity)) %>% 
-           mutate(burden = "Hospital_death")
+           mutate(burden = "Hospital_deathRaw"), 
+         # filter(., type_sej == "HOSPITALISATION") %>% 
+         #   summarise(n_knownCommunity = sum(knownCommunity*Death), 
+         #             n_probableCommunity = sum(probableCommunity*Death), 
+         #             n_withLate = sum(correctedCommunity_late*Death),
+         #             n_withLateUntested = sum(correctedCommunity_lateUntested*Death),
+         #             n_afterCorrection = sum(correctedCommunity*Death)) %>% 
+         #   mutate(burden = "Hospital_deathControl"), 
+         filter(., type_sej == "HOSPITALISATION") %>% 
+           summarise(n_knownCommunity = sum(knownCommunity*Death_plus30), 
+                     n_probableCommunity = sum(probableCommunity*Death_plus30), 
+                     n_withLate = sum(correctedCommunity_late*Death_plus30),
+                     n_withLateUntested = sum(correctedCommunity_lateUntested*Death_plus30),
+                     n_afterCorrection = sum(correctedCommunity*Death_plus30)) %>% 
+           mutate(burden = "Hospital_deathPlus30")
   )} %>% 
   # mutate(p_Corrected = n_corrected/n_knownCommunity - 1) %>% 
   transmute(age_group, 
@@ -191,10 +208,10 @@ patient_outcomes_inc_master <- patient_outcomes_virus_correction %>%
   ungroup %>% 
   complete(age_group, nesting(seasonAdmitted, monthAdmitted), nesting(type_sej, burden), Virus, Adjustment, fill = list(n = 0)) %>% 
   mutate(n = ifelse((Virus == "SARS-CoV-2") & (seasonAdmitted %in% season_vec[1:3]), NA, n)) %>% 
-  mutate(Virus = factor(Virus, virus_vec_slash), 
+  mutate(Virus = factor(Virus, virus_vec), 
          # month_name = factor(month_name, month.abb[c(9:12, 1:8)]),
          Adjustment = factor(Adjustment, levels = c("knownCommunity", "withLate", "withLateUntested", "afterCorrection")), 
-         burden = factor(burden, levels = c("Emergency_only", "Hospital_admission", "Hospital_ICU", "Hospital_death")))
+         burden = factor(burden, levels = c("Emergency_only", "Hospital_admission", "Hospital_ICU", "Hospital_deathRaw", "Hospital_deathControl", "Hospital_deathPlus30")))
 
 # patient_outcomes_inc <- patient_outcomes_virus_correction %>% 
 #   # filter(type_sej == "HOSPITALISATION") %>%

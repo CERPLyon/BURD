@@ -1,8 +1,10 @@
 ## to be accessible anywhere the main analysis or post-process are run
 
 
-virus_vec = c("InfluenzaA", "InfluenzaB", "SARS-CoV-2", "RSV", "hMPV", "Rhinovirus", "EnterovirusRhinovirus", 
-              "Enterovirus", "ADV","PIV","hCoV")
+virus_vec = c("InfluenzaA", "InfluenzaB", "SARS-CoV-2", "RSV", "hMPV", 
+              "RVEV", 
+              # "Rhinovirus", "EnterovirusRhinovirus", "Enterovirus", 
+              "ADV","PIV","hCoV")
 season_vec = sort(unique(data_NDA_reduced$season_admitted))
 UM_vec = sort(unique(data_NDA_reduced$catego_UM))
   

@@ -11,20 +11,13 @@ source("b0.2_bact_classification.R")
 
 #at level of NDA
 
-data_PCR_NDA <- data_PCR %>% 
+data_PCR_NDA <- data_PCR_sejour_collapseSubtypes %>% 
   group_by(NDA_pseudo, Virus) %>% 
   summarise(TestPos = case_when(any(resultatbis %in% "POSITIVE") ~ 1, 
                                 any(resultatbis %in% "NEGATIVE") ~ 0, 
                                 T ~ NA)) %>% 
   ungroup %>% 
   complete(NDA_pseudo, Virus, fill = list(TestPos = NA))
-
-
-# data_sejours %>% 
-#   select(catego_UM, catego_UM_agg) %>% unique
-
-
-
 
 data_NDA_long <- diag_sejour_long %>% 
   # left_join(data_PCR_NDA, by = "NDA_pseudo", relationship = "many-to-many") %>% 
@@ -45,21 +38,7 @@ data_NDA_long <- diag_sejour_long %>%
             #             , 
                       by = "NDA_pseudo", relationship = "many-to-one")
 
-# data_NDA_wide <- data_NDA_long %>% pull(name) %>% unique
-#   # filter(Virus == this_virus) %>% 
-#   mutate(name = gsub("[0-9]*", "", name)) %>% 
-#   mutate(name = gsub("^r", "", name)) %>% 
-#   mutate(name = ifelse(name == "diag", "V", name)) %>% 
-#   mutate(type = factor(name, levels = c("DP", "DR", "AS", "V"))) %>% 
-#   mutate(CIM10 = gsub("\\+", "", CIM10)) %>%
-#   group_by(NDA_pseudo, age, age_group, monthnum, monthname, season_admitted, CIM10) %>% 
-#   summarise(type = levels(type)[min(as.numeric(type))]) %>% 
-#   ungroup %>% 
-#   select(NDA_pseudo, type, age, age_group, monthnum, monthname, season_admitted, CIM10) %>% 
-#   pivot_wider(id_cols = c("NDA_pseudo", "age", "age_group", "monthnum", "monthname", "season_admitted"), 
-#               names_from = CIM10, values_from = type, values_fill = "") %>% 
-#   rename(ZERO = `0`)
-  
+
   data_NDA_wide_noBiomarkers <- data_NDA_long %>% 
     # filter(Virus == this_virus) %>% 
     # mutate(name = gsub("[0-9]*", "", name)) %>% 

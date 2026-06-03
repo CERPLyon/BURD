@@ -1,17 +1,17 @@
 library(tidyverse)
-testday_bardata <- data_PCR_sejour_age %>% 
+testday_bardata <- data_PCR_sejour_collapseSubtypes %>% 
   filter(resultatbis %in% c("POSITIVE", "NEGATIVE")) %>% 
   arrange(testday, resultatbis) %>% 
   group_by(Virus, IPP_sejour) %>% 
   summarise(first_testday = testday[1],
             result = resultatbis[1]) %>% 
-  mutate(result = fct_rev(result)) %>% 
-  mutate(Virus = plyr::revalue(x = Virus, c("Enterovirus/Rhinovirus" = "EnterovirusRhinovirus"))) %>% 
+  # mutate(result = fct_rev(result)) %>%
+  # mutate(Virus = fct_recode(Virus, `RV/EV` = "RVEV")) %>%
   right_join(expand.grid(list(IPP_sejour = unique(data_sejours$IPP_sejour), Virus = virus_vec))) %>% 
   mutate(Virus = factor(Virus, virus_vec)) %>% 
-  mutate(first_testday = replace_na(first_testday, replace = Inf), 
-         result = replace_na(result, "UNINTERPRETABLE")) %>% 
-  filter(Virus != "InfluenzaNT") 
+  mutate(first_testday = replace_na(first_testday, replace = Inf))
+
+
   # group_by(Virus, first_testday, result) %>% 
   # summarise(n = n()) %>% 
 
@@ -59,5 +59,5 @@ testday_bardata %>%
   scale_fill_manual(values = c(NEGATIVE = "skyblue3", POSITIVE = "red")) + 
   facet_wrap(.~Virus, scale = "free_y")
 
-ggsave(filename = "plots/testday_problem.png", width = 24, height = 16, units = "cm")
+ggsave(filename = "output/plots/testday_problem.png", width = 24, height = 16, units = "cm")
 
