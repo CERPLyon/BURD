@@ -2,13 +2,14 @@ library(tidyverse)
 source("b0.R")
 
 
+deathRate_age_SNDS <- read_csv2(file = paste0("output/deathRate_age_SNDS.csv"))
 
 acute_day_limit = 3
 suspected_day_limit = 7
 
 
 patient_outcomes <- data_sejours %>% 
-  left_join(deathRate_age_SNDS %>% transmute(age_group, DP, deathRate_within30_minusExcess), by = c("age_group", "DP")) %>% 
+  left_join(deathRate_age_SNDS %>% transmute(age_group = factor(age_group, levels = age_vec), DP, deathRate_within30_minusExcess), by = c("age_group", "DP")) %>% 
   group_by(IPP_sejour, age, age_group, 
            # date_ent_sejour, 
            # week_admitted, year_admitted, 
@@ -70,7 +71,7 @@ patient_outcomes %>%
 #### inferred from late testing ####
 
 # sensitivity_fits <- read_csv(file = paste0("~/FIRESP/FIRESP_analysis/BURD/sensitivity_fits.csv"))
-estStatus <- read_csv(file = paste0("output/estStatus.csv"))
+estStatus <- read_csv2(file = paste0("output/estStatus_age.csv"))
 
 
 # lateCorrection_table <- patient_outcomes %>% 
@@ -100,25 +101,50 @@ mlPrediction_sejour <- NDA_virus_prediction_sejour %>%
   # summarise(infected_rfPredicted = median(prediction))
   arrange(.by_group = T, NDA_startDay) %>% 
   dplyr::slice(1) %>% 
-  transmute(IPP_sejour, Virus, infected_mlPredicted = prediction) %>% 
+  transmute(IPP_sejour, Virus, infected_mlPredicted = prediction, infected_mlPredictedLo = predictionLo, infected_mlPredictedHi = predictionHi) %>% 
   ungroup
+
+
 
 patient_outcomes_virus_correction <- patient_outcomes %>% 
   left_join(patient_knownStatus %>% select(IPP_sejour, Virus, test02, test36, knownCommunity, probableCommunity), relationship = "one-to-many") %>% 
-  left_join(estStatus %>% transmute(IPP_sejour = patient_id, Virus, late_infected = p_infected), by = c("IPP_sejour", "Virus"), relationship = "one-to-one") %>% 
-  left_join(mlPrediction_sejour %>% transmute(IPP_sejour, Virus, untested_infected = infected_mlPredicted), by = c("IPP_sejour", "Virus"), relationship = "one-to-one") %>% 
+  left_join(estStatus %>% transmute(IPP_sejour = patient_id, Virus, 
+                                    late_infected = p_infected, late_infected_lo = p_infected_lo, late_infected_hi = p_infected_hi), by = c("IPP_sejour", "Virus"), relationship = "one-to-one") %>% 
+  left_join(mlPrediction_sejour %>% transmute(IPP_sejour, Virus, 
+                                              untested_infected = infected_mlPredicted, untested_infected_lo = infected_mlPredictedLo, untested_infected_hi = infected_mlPredictedHi), by = c("IPP_sejour", "Virus"), relationship = "one-to-one") %>% 
   mutate(Virus = factor(Virus, levels = virus_vec)) %>% 
   filter(Virus != "InfluenzaNT") %>% 
   mutate(correctedCommunity_late = case_when(knownCommunity == 1 ~ 1, #if there's a positive test on days 0-2, it's a defined community case
-                                        (test02 == 1) & (knownCommunity == 0) ~ 0, #if there's a negative test, it's a non-case
-                                        (test36 == 1) ~ late_infected, #if there's a test on days 3-6, use the late testing analysis
-                                        T ~ 0)) %>% 
+                                             (test02 == 1) & (knownCommunity == 0) ~ 0, #if there's a negative test, it's a non-case
+                                             (test36 == 1) ~ late_infected, #if there's a test on days 3-6, use the late testing analysis
+                                             T ~ 0)) %>% 
+  mutate(correctedCommunity_late_lo = case_when(knownCommunity == 1 ~ 1, #if there's a positive test on days 0-2, it's a defined community case
+                                             (test02 == 1) & (knownCommunity == 0) ~ 0, #if there's a negative test, it's a non-case
+                                             (test36 == 1) ~ late_infected_lo, #if there's a test on days 3-6, use the late testing analysis
+                                             T ~ 0)) %>% 
+  mutate(correctedCommunity_late_hi = case_when(knownCommunity == 1 ~ 1, #if there's a positive test on days 0-2, it's a defined community case
+                                                (test02 == 1) & (knownCommunity == 0) ~ 0, #if there's a negative test, it's a non-case
+                                                (test36 == 1) ~ late_infected_hi, #if there's a test on days 3-6, use the late testing analysis
+                                                T ~ 0)) %>% 
   mutate(correctedCommunity_lateUntested = case_when(knownCommunity == 1 ~ 1, #if there's a positive test on days 0-2, it's a defined community case
-                                        (test02 == 1) & (knownCommunity == 0) ~ 0, #if there's a negative test, it's a non-case
-                                        (Virus == "SARS-CoV-2") & (season_admitted %in% season_vec[1:3]) ~ 0, #no SARS-CoV-2 before 2019/20
-                                        (Virus == "hCoV") & (season_admitted %in% season_vec[4:9]) ~ 0, #no hCoV during or after 2019/20
-                                        (test36 == 1) ~ late_infected, #if there's a test on days 3-6, use the late testing analysis
-                                        T ~ untested_infected)) %>% 
+                                                     (test02 == 1) & (knownCommunity == 0) ~ 0, #if there's a negative test, it's a non-case
+                                                     (Virus == "SARS-CoV-2") & (season_admitted %in% season_vec[1:3]) ~ 0, #no SARS-CoV-2 before 2019/20
+                                                     (Virus == "hCoV") & (season_admitted %in% season_vec[4:9]) ~ 0, #no hCoV during or after 2019/20
+                                                     (test36 == 1) ~ late_infected, #if there's a test on days 3-6, use the late testing analysis
+                                                     T ~ untested_infected)) %>% 
+  mutate(correctedCommunity_lateUntested_lo = case_when(knownCommunity == 1 ~ 1, #if there's a positive test on days 0-2, it's a defined community case
+                                                     (test02 == 1) & (knownCommunity == 0) ~ 0, #if there's a negative test, it's a non-case
+                                                     (Virus == "SARS-CoV-2") & (season_admitted %in% season_vec[1:3]) ~ 0, #no SARS-CoV-2 before 2019/20
+                                                     (Virus == "hCoV") & (season_admitted %in% season_vec[4:9]) ~ 0, #no hCoV during or after 2019/20
+                                                     (test36 == 1) ~ late_infected_lo, #if there's a test on days 3-6, use the late testing analysis
+                                                     T ~ untested_infected_lo)) %>% 
+  mutate(correctedCommunity_lateUntested_hi = case_when(knownCommunity == 1 ~ 1, #if there's a positive test on days 0-2, it's a defined community case
+                                                     (test02 == 1) & (knownCommunity == 0) ~ 0, #if there's a negative test, it's a non-case
+                                                     (Virus == "SARS-CoV-2") & (season_admitted %in% season_vec[1:3]) ~ 0, #no SARS-CoV-2 before 2019/20
+                                                     (Virus == "hCoV") & (season_admitted %in% season_vec[4:9]) ~ 0, #no hCoV during or after 2019/20
+                                                     (test36 == 1) ~ late_infected_hi, #if there's a test on days 3-6, use the late testing analysis
+                                                     T ~ untested_infected_hi)) %>% 
+  
   group_by(IPP_sejour) %>% 
   mutate(knownCommunityViruses = sum(knownCommunity), 
          sumCorrected = sum(correctedCommunity_lateUntested, na.rm = T), # sum across all corrected infection probabilities (can be >1)
@@ -127,8 +153,17 @@ patient_outcomes_virus_correction <- patient_outcomes %>%
   mutate(correctedCommunity = case_when(knownCommunityViruses > 0 ~ knownCommunity/knownCommunityViruses, #if any virus was confirmed in the first three days, then this case is attributed fractionally to each of the known viruses
                                         # knownCommunityViruses > 0 ~ knownCommunity, #alternatively, let that be a whole contribution to that virus
                                         sumCorrected == 0 ~ 0, # to avoid dividing by zero
-                                        T ~ correctedCommunity_lateUntested/sumCorrected*totalProbabilityInfected # adjusts correction probabilities so that their sum is equal to the total probability of being infected
-                                        )) 
+                                        T ~ correctedCommunity_lateUntested/sumCorrected*totalProbabilityInfected)) %>% # adjusts correction probabilities so that their sum is equal to the total probability of being infected
+  mutate(correctedCommunity_lo = case_when(knownCommunityViruses > 0 ~ knownCommunity/knownCommunityViruses, #if any virus was confirmed in the first three days, then this case is attributed fractionally to each of the known viruses
+                                        # knownCommunityViruses > 0 ~ knownCommunity, #alternatively, let that be a whole contribution to that virus
+                                        sumCorrected == 0 ~ 0, # to avoid dividing by zero
+                                        T ~ correctedCommunity_lateUntested_lo/sumCorrected*totalProbabilityInfected)) %>% # adjusts correction probabilities so that their sum is equal to the total probability of being infected
+  mutate(correctedCommunity_hi = case_when(knownCommunityViruses > 0 ~ knownCommunity/knownCommunityViruses, #if any virus was confirmed in the first three days, then this case is attributed fractionally to each of the known viruses
+                                        # knownCommunityViruses > 0 ~ knownCommunity, #alternatively, let that be a whole contribution to that virus
+                                        sumCorrected == 0 ~ 0, # to avoid dividing by zero
+                                        T ~ correctedCommunity_lateUntested_hi/sumCorrected*totalProbabilityInfected)) %>% # adjusts correction probabilities so that their sum is equal to the total probability of being infected
+  mutate(attribKnownCommunity = ifelse(knownCommunityViruses > 1, knownCommunity/knownCommunityViruses, knownCommunity)) 
+
 
 # now work into incidences
 
@@ -150,31 +185,49 @@ catchmentPop <- HCLcatchment_ageyear_Urg_ARA %>%
 patient_outcomes_inc_master <- patient_outcomes_virus_correction %>% 
   # mutate(month_name = month(month_admitted, label = T, abbr = T, locale = "EN")) %>% 
   # filter(type_sej == "HOSPITALISATION") %>%
-  mutate(Virus = case_when(Virus == "Rhinovirus" ~ "Enterovirus/Rhinovirus", 
-                           Virus == "Enterovirus" ~ "Enterovirus/Rhinovirus", 
-                           # Virus == "Rhinovirus" ~ "Enterovirus/Rhinovirus", 
-                           T ~ Virus)) %>% 
   rename(seasonAdmitted = season_admitted, monthAdmitted = month_admitted) %>% 
   group_by(age_group, seasonAdmitted, monthAdmitted, type_sej, Virus) %>% 
-  {rbind(summarise(., n_knownCommunity = sum(knownCommunity), 
+  {rbind(summarise(., 
+                   n_knownCommunityRaw = sum(knownCommunity), 
+                   n_knownCommunity = sum(attribKnownCommunity), 
                    n_probableCommunity = sum(probableCommunity), 
                    n_withLate = sum(correctedCommunity_late),
+                   n_withLateLo = sum(correctedCommunity_late_lo),
+                   n_withLateHi = sum(correctedCommunity_late_hi),
                    n_withLateUntested = sum(correctedCommunity_lateUntested),
-                   n_afterCorrection = sum(correctedCommunity)) %>% 
+                   n_withLateUntestedLo = sum(correctedCommunity_lateUntested_lo),
+                   n_withLateUntestedHi = sum(correctedCommunity_lateUntested_hi),
+                   n_afterCorrection = sum(correctedCommunity),
+                   n_afterCorrectionLo = sum(correctedCommunity_lo),
+                   n_afterCorrectionHi = sum(correctedCommunity_hi)) %>% 
            mutate(burden = ifelse(type_sej == "HOSPITALISATION", "Hospital_admission", "Emergency_only")), 
          filter(., type_sej == "HOSPITALISATION", ICU == 1) %>% 
-           summarise(n_knownCommunity = sum(knownCommunity), 
+           summarise(n_knownCommunityRaw = sum(knownCommunity), 
+                     n_knownCommunity = sum(attribKnownCommunity), 
                      n_probableCommunity = sum(probableCommunity), 
                      n_withLate = sum(correctedCommunity_late),
+                     n_withLateLo = sum(correctedCommunity_late_lo),
+                     n_withLateHi = sum(correctedCommunity_late_hi),
                      n_withLateUntested = sum(correctedCommunity_lateUntested),
-                     n_afterCorrection = sum(correctedCommunity)) %>% 
+                     n_withLateUntestedLo = sum(correctedCommunity_lateUntested_lo),
+                     n_withLateUntestedHi = sum(correctedCommunity_lateUntested_hi),
+                     n_afterCorrection = sum(correctedCommunity),
+                     n_afterCorrectionLo = sum(correctedCommunity_lo),
+                     n_afterCorrectionHi = sum(correctedCommunity_hi)) %>% 
            mutate(burden = "Hospital_ICU"), 
          filter(., type_sej == "HOSPITALISATION", Death == 1) %>% 
-           summarise(n_knownCommunity = sum(knownCommunity), 
+           summarise(n_knownCommunityRaw = sum(knownCommunity), 
+                     n_knownCommunity = sum(attribKnownCommunity), 
                      n_probableCommunity = sum(probableCommunity), 
                      n_withLate = sum(correctedCommunity_late),
+                     n_withLateLo = sum(correctedCommunity_late_lo),
+                     n_withLateHi = sum(correctedCommunity_late_hi),
                      n_withLateUntested = sum(correctedCommunity_lateUntested),
-                     n_afterCorrection = sum(correctedCommunity)) %>% 
+                     n_withLateUntestedLo = sum(correctedCommunity_lateUntested_lo),
+                     n_withLateUntestedHi = sum(correctedCommunity_lateUntested_hi),
+                     n_afterCorrection = sum(correctedCommunity),
+                     n_afterCorrectionLo = sum(correctedCommunity_lo),
+                     n_afterCorrectionHi = sum(correctedCommunity_hi)) %>% 
            mutate(burden = "Hospital_deathRaw"), 
          # filter(., type_sej == "HOSPITALISATION") %>% 
          #   summarise(n_knownCommunity = sum(knownCommunity*Death), 
@@ -184,11 +237,18 @@ patient_outcomes_inc_master <- patient_outcomes_virus_correction %>%
          #             n_afterCorrection = sum(correctedCommunity*Death)) %>% 
          #   mutate(burden = "Hospital_deathControl"), 
          filter(., type_sej == "HOSPITALISATION") %>% 
-           summarise(n_knownCommunity = sum(knownCommunity*Death_plus30), 
+           summarise(n_knownCommunityRaw = sum(knownCommunity), 
+                     n_knownCommunity = sum(attribKnownCommunity*Death_plus30), 
                      n_probableCommunity = sum(probableCommunity*Death_plus30), 
                      n_withLate = sum(correctedCommunity_late*Death_plus30),
+                     n_withLateLo = sum(correctedCommunity_late_lo*Death_plus30),
+                     n_withLateHi = sum(correctedCommunity_late_hi*Death_plus30),
                      n_withLateUntested = sum(correctedCommunity_lateUntested*Death_plus30),
-                     n_afterCorrection = sum(correctedCommunity*Death_plus30)) %>% 
+                     n_withLateUntestedLo = sum(correctedCommunity_lateUntested_lo*Death_plus30),
+                     n_withLateUntestedHi = sum(correctedCommunity_lateUntested_hi*Death_plus30),
+                     n_afterCorrection = sum(correctedCommunity*Death_plus30),
+                     n_afterCorrectionLo = sum(correctedCommunity_lo*Death_plus30),
+                     n_afterCorrectionHi = sum(correctedCommunity_hi*Death_plus30)) %>% 
            mutate(burden = "Hospital_deathPlus30")
   )} %>% 
   # mutate(p_Corrected = n_corrected/n_knownCommunity - 1) %>% 
@@ -198,20 +258,42 @@ patient_outcomes_inc_master <- patient_outcomes_virus_correction %>%
             type_sej, 
             burden, 
             Virus, 
+            n_knownCommunityRaw, 
             n_knownCommunity, 
-            # n_probableCommunity,
-            n_withLate, 
-            n_withLateUntested, 
+            n_probableCommunity,
+            n_withLate = n_withLate, 
+            n_withLateLo = n_withLateLo,  
+            n_withLateHi = n_withLateHi,  
+            n_withLateUntested = n_withLateUntested,   
+            n_withLateUntestedLo = n_withLateUntestedLo,   
+            n_withLateUntestedHi = n_withLateUntestedHi,   
             # n_corrected = n_afterCorrection - n_knownCommunity, 
-            n_afterCorrection) %>% 
+            n_afterCorrection = n_afterCorrection,   
+            n_afterCorrectionLo = n_afterCorrectionLo,    
+            n_afterCorrectionHi = n_afterCorrectionHi
+            
+            # n_withLate = ifelse(seasonAdmitted %in% c("20/21", "21/22"), n_knownCommunity, n_withLate), 
+            # n_withLateLo = ifelse(seasonAdmitted %in% c("20/21", "21/22"), n_knownCommunity, n_withLateLo),  
+            # n_withLateHi = ifelse(seasonAdmitted %in% c("20/21", "21/22"), n_knownCommunity, n_withLateHi),  
+            # n_withLateUntested = ifelse(seasonAdmitted %in% c("20/21", "21/22"), n_knownCommunity, n_withLateUntested),   
+            # n_withLateUntestedLo = ifelse(seasonAdmitted %in% c("20/21", "21/22"), n_knownCommunity, n_withLateUntestedLo),   
+            # n_withLateUntestedHi = ifelse(seasonAdmitted %in% c("20/21", "21/22"), n_knownCommunity, n_withLateUntestedHi),   
+            # # n_corrected = n_afterCorrection - n_knownCommunity, 
+            # n_afterCorrection = ifelse(seasonAdmitted %in% c("20/21", "21/22"), n_knownCommunity, n_afterCorrection),   
+            # n_afterCorrectionLo = ifelse(seasonAdmitted %in% c("20/21", "21/22"), n_knownCommunity, n_afterCorrectionLo),    
+            # n_afterCorrectionHi = ifelse(seasonAdmitted %in% c("20/21", "21/22"), n_knownCommunity, n_afterCorrectionHi)
+            ) %>% 
+  
   pivot_longer(-c("age_group", "seasonAdmitted", "monthAdmitted", "type_sej", "burden", "Virus"), names_sep = "_", names_to = c(".value", "Adjustment")) %>% 
   ungroup %>% 
   complete(age_group, nesting(seasonAdmitted, monthAdmitted), nesting(type_sej, burden), Virus, Adjustment, fill = list(n = 0)) %>% 
   mutate(n = ifelse((Virus == "SARS-CoV-2") & (seasonAdmitted %in% season_vec[1:3]), NA, n)) %>% 
   mutate(Virus = factor(Virus, virus_vec), 
          # month_name = factor(month_name, month.abb[c(9:12, 1:8)]),
-         Adjustment = factor(Adjustment, levels = c("knownCommunity", "withLate", "withLateUntested", "afterCorrection")), 
+         Adjustment = factor(Adjustment, levels = c("knownCommunityRaw", "knownCommunity", "probableCommunity", "withLate", "withLateLo", "withLateHi", "withLateUntested", "withLateUntestedLo", "withLateUntestedHi", "afterCorrection", "afterCorrectionLo", "afterCorrectionHi")), 
          burden = factor(burden, levels = c("Emergency_only", "Hospital_admission", "Hospital_ICU", "Hospital_deathRaw", "Hospital_deathControl", "Hospital_deathPlus30")))
+
+
 
 # patient_outcomes_inc <- patient_outcomes_virus_correction %>% 
 #   # filter(type_sej == "HOSPITALISATION") %>%

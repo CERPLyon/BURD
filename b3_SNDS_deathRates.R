@@ -89,7 +89,8 @@ deathRate_age_SNDS <- deaths_age_SNDS %>%
   left_join(background_mortality) %>% 
   mutate(deathRate_within30_minusExcess = pmax(0, deathRate_within30 - mortality30day))
 
-
+deathRate_age_SNDS %>% 
+  write_csv2(file = "output/deathRate_age_SNDS.csv")
 
 
 #### investigation, not essential
@@ -104,27 +105,10 @@ dp_deaths_FIRESP <- data_sejours %>%
              , type_sej
              , DP
     ) %>%
-    summarise(deaths = n_distinct(IPP_sejour[DeathSejour %in% 1]), nDP = n_distinct(IPP_sejour)) %>% 
-  group_by(age_group, DP) %>% 
-  summarise(deaths_FIRESP = mean(deaths), nDP = mean(nDP))
-
-
-# dp_deaths_FIRESP <- data_sejours %>% 
-#   # filter(type_sej == "HOSPITALISATION") %>%
-#   group_by(IPP_sejour) %>% 
-#   mutate(DeathSejour = as.numeric(any(mode_sor == "DEATH")), YearDischarged = year(date_sor_sejour)) %>% 
-#   transmute(age_group, IPP_alea , IPP_sejour , type_sej, DP, mode_sor, YearDischarged, DeathSejour) %>% 
-#   mutate(dp1 = substr(DP, 1, 1), dp2 = substr(DP, 1, 2), dp3 = substr(DP, 1, 3)) %>% 
-#   # filter(IPP_alea == zz) %>%
-#   group_by(YearDischarged
-#            , age_group
-#            , type_sej
-#            , dp1
-#            , dp2
-#            , dp3
-#            , DP
-#   ) %>% 
-#   summarise(deaths = n_distinct(IPP_sejour[DeathSejour %in% 1]), nDP = n_distinct(IPP_sejour))
+    summarise(deaths_FIRESP = n_distinct(IPP_sejour[DeathSejour %in% 1]), nDP = n_distinct(IPP_sejour))
+# %>% 
+#   group_by(age_group, YearDischarged, type_sej, DP) %>% 
+#   summarise(deaths_FIRESP = mean(deaths), nDP = mean(nDP))
 
 
 
@@ -137,19 +121,19 @@ inclusion_string <- paste0(c(
 dp_deaths_joined <- full_join(dp_deaths_FIRESP %>% 
             filter(type_sej == "HOSPITALISATION") %>% 
             group_by(YearDischarged, age_group
-                     , dp1
-                     , dp2
-                     , dp3
+                     # , dp1
+                     # , dp2
+                     # , dp3
                      , DP
             ) %>% 
-            summarise(deaths = sum(deaths), nDP = sum(nDP)) %>% 
-            mutate(deathRate_FIRESP = deaths/nDP) 
+            summarise(deaths_FIRESP = sum(deaths_FIRESP), nDP = sum(nDP)) %>% 
+            mutate(deathRate_FIRESP = deaths_FIRESP/nDP) 
           , 
-          dp_deaths_SNDS %>% 
+          deaths_age_SNDS %>% 
             group_by(YearDischarged, age_group
-                     , dp1
-                     , dp2
-                     , dp3
+                     # , dp1
+                     # , dp2
+                     # , dp3
                      , DP
             ) %>% 
             summarise(across(c("death_inHCL", "death_within30", "total_dp"), sum)) %>% 
@@ -159,11 +143,6 @@ dp_deaths_joined <- full_join(dp_deaths_FIRESP %>%
 ) %>% 
   filter(grepl(pattern = inclusion_string, DP))
 
-dp_deaths_joined$deathRate_within30 %>% hist
-dp_deaths_joined %>% 
-  group_by(age_group, DP, death_FIRESP = sum(deaths), nDP)
-
-
 
 dp_deaths_joined %>% 
   # filter(YearDischarged %in% c(2017:2024)) %>% 
@@ -173,57 +152,73 @@ dp_deaths_joined %>%
   # filter(problem) %>% View
   # ggplot(aes(x = deaths, y = death_inHCL)) +
   # ggplot(aes(x = deathRate_FIRESP, y = deathRate_inHCL)) +
-  ggplot(aes(x = nDP, y = total_dp)) +
-  geom_point(alpha = 0.2) + 
-  geom_abline(intercept = 0, slope = 1, linetype = "dotted") + 
-  geom_smooth(method = "lm") + 
-  facet_wrap(.~age_group) + 
+  # # ggplot(aes(x = nDP, y = total_dp)) +
+  # geom_point(alpha = 0.2) + 
+  # geom_smooth(method = "lm") +
+  ggpubr::ggscatter(x = 'deathRate_FIRESP',
+                    y = 'deathRate_inHCL',
+                    # facet.by = "type_sej",
+                    color = 'grey50',
+                    cor.method = "spearman",
+                    cor.coef = TRUE,
+                    conf.int = TRUE,
+                    size = 0.5,
+                    add = "reg.line",
+                    add.params = list(color = 'red'),
+  ) + 
+  geom_abline(intercept = 0, slope = 1, linetype = "dotted") +
+  facet_wrap(.~age_group) +
   theme_bw() +
-  scale_y_log10() + scale_x_log10()
+  scale_y_log10() + scale_x_log10() + 
+  labs(x = "FIRESP", y = "SNDS")
+
+
+
+ggsave("output/plots/inHosp_deathRates.png", width = 20, height = 12, units = "cm")
   
-  
-dp_deaths_joined %>% 
-  # filter(YearDischarged %in% c(2017:2024)) %>% 
-  # filter(problem2) %>% 
-  # View
-  # filter(is.na(problem)) %>% View
-  # filter(problem) %>% View
-  # ggplot(aes(x = deaths, y = death_inHCL)) +
-  # ggplot(aes(x = deathRate_FIRESP, y = deathRate_inHCL)) +
-  # ggplot(aes(x = nDP, y = total_dp)) +
-  ggplot(aes(x = deathRate_inHCL, y = deathRate_within30)) +
-  geom_point(alpha = 0.2) + 
-  geom_abline(intercept = 0, slope = 1, linetype = "dotted") + 
-  geom_smooth(method = "lm") + 
-  facet_wrap(.~age_group) + 
-  theme_bw() +
-  scale_y_log10() + scale_x_log10()
 
-dp_deaths_joined %>% 
-  mutate(ICD10_group = DP) %>% 
-  group_by(ICD10_group, YearDischarged, age_group) %>% 
-  summarise(across(deaths:total_dp, ~sum(.x, na.rm = T))) %>% 
-  mutate(deathRate_FIRESP = deaths/nDP, 
-         deathRate_inHCL = death_inHCL/total_dp, 
-         deathRate_within30 = death_within30/total_dp) %>% 
-  ggplot(aes(x = YearDischarged, y = deathRate_inHCL, group = ICD10_group)) + 
-  geom_line(aes(y = deathRate_inHCL, colour = "inHCL")) + 
-  geom_line(aes(y = deathRate_FIRESP, colour = "FIRESP")) + 
-  geom_line(aes(y = deathRate_within30, colour = "within30")) + 
-  facet_wrap(.~age_group)
-
-dp_deaths_joined %>% 
-  mutate(ICD10_group = DP) %>% 
-  group_by(ICD10_group, YearDischarged, age_group) %>% 
-  summarise(across(deaths:total_dp, ~sum(.x, na.rm = T))) %>% 
-  group_by(ICD10_group, age_group) %>% 
-  mutate(across(deaths:total_dp, ~mean(.x, na.rm = T))) %>% 
-  mutate(deathRate_FIRESP = deaths/nDP, 
-         deathRate_inHCL = death_inHCL/total_dp, 
-         deathRate_within30 = death_within30/total_dp) %>% 
-  ggplot(aes(x = age_group, y = deathRate_inHCL, group = ICD10_group)) + 
-  geom_line(aes(y = deathRate_inHCL, colour = "inHCL")) + 
-  geom_line(aes(y = deathRate_FIRESP, colour = "FIRESP")) + 
-  geom_line(aes(y = deathRate_within30, colour = "within30"))
-
-  scale_y_log10()
+# dp_deaths_joined %>%
+#   # filter(YearDischarged %in% c(2017:2024)) %>%
+#   # filter(problem2) %>%
+#   # View
+#   # filter(is.na(problem)) %>% View
+#   # filter(problem) %>% View
+#   # ggplot(aes(x = deaths, y = death_inHCL)) +
+#   # ggplot(aes(x = deathRate_FIRESP, y = deathRate_inHCL)) +
+#   # ggplot(aes(x = nDP, y = total_dp)) +
+#   ggplot(aes(x = deathRate_inHCL, y = deathRate_within30)) +
+#   geom_point(alpha = 0.2) +
+#   geom_abline(intercept = 0, slope = 1, linetype = "dotted") +
+#   geom_smooth(method = "lm") +
+#   facet_wrap(.~age_group) +
+#   theme_bw() +
+#   scale_y_log10() + scale_x_log10()
+# 
+# dp_deaths_joined %>%
+#   mutate(ICD10_group = DP) %>%
+#   group_by(ICD10_group, YearDischarged, age_group) %>%
+#   summarise(across(deaths:total_dp, ~sum(.x, na.rm = T))) %>%
+#   mutate(deathRate_FIRESP = deaths/nDP,
+#          deathRate_inHCL = death_inHCL/total_dp,
+#          deathRate_within30 = death_within30/total_dp) %>%
+#   ggplot(aes(x = YearDischarged, y = deathRate_inHCL, group = ICD10_group)) +
+#   geom_line(aes(y = deathRate_inHCL, colour = "inHCL")) +
+#   geom_line(aes(y = deathRate_FIRESP, colour = "FIRESP")) +
+#   geom_line(aes(y = deathRate_within30, colour = "within30")) +
+#   facet_wrap(.~age_group)
+# 
+# dp_deaths_joined %>%
+#   mutate(ICD10_group = DP) %>%
+#   group_by(ICD10_group, YearDischarged, age_group) %>%
+#   summarise(across(deaths:total_dp, ~sum(.x, na.rm = T))) %>%
+#   group_by(ICD10_group, age_group) %>%
+#   mutate(across(deaths:total_dp, ~mean(.x, na.rm = T))) %>%
+#   mutate(deathRate_FIRESP = deaths/nDP,
+#          deathRate_inHCL = death_inHCL/total_dp,
+#          deathRate_within30 = death_within30/total_dp) %>%
+#   ggplot(aes(x = age_group, y = deathRate_inHCL, group = ICD10_group)) +
+#   geom_line(aes(y = deathRate_inHCL, colour = "inHCL")) +
+#   geom_line(aes(y = deathRate_FIRESP, colour = "FIRESP")) +
+#   geom_line(aes(y = deathRate_within30, colour = "within30"))
+# 
+#   scale_y_log10()

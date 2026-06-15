@@ -23,7 +23,7 @@ nrounds = 5000
 p_training = 0.7
   
 
-# virus_index = 1
+virus_index = 9
 ncv = NULL
 NDA_virus_prediction = NULL
 for(virus_index in 1:9){
@@ -33,6 +33,15 @@ for(virus_index in 1:9){
   source("b2.2_prep_xg.R") #this ensures that the data prep is the same as in the actual training script
   
   load(file = paste0("ml/cvXG_", output_stem, ".RData"), verbose = T)
+  
+  prediction_LoHi <- read_csv2(paste0("ml/bootPredictions_", output_stem, ".csv")) 
+  if((prediction_LoHi %>% 
+    filter(is.na(predictionHi) | is.na(predictionLo)) %>% 
+    nrow) > 0) stop()
+  # %>% 
+  #   pivot_longer(-c("NDA_pseudo", "Virus"), names_to = "boot", values_to = "prediction") %>% 
+  #   group_by(NDA_pseudo, Virus) %>% 
+  #   summarise(predictionLo = quantile(prediction, 0.025), predictionHi = quantile(prediction, 0.975))
   
   # print(ncv_out$results)
   # print(ncv_out$baseline)
@@ -63,7 +72,11 @@ for(virus_index in 1:9){
   
   NDA_virus_prediction_piece = tibble(NDA_pseudo = data_NDA_thisVirus$NDA_pseudo, season_admitted = data_NDA_thisVirus$season_admitted, Virus = this_virus, prediction = prediction_allNDA) %>% 
     mutate(prediction = ifelse((Virus != "SARS-CoV-2") | (season_admitted %in% season_vec[-(1:3)]), prediction, 0)) %>% 
-    select(-season_admitted)
+    select(-season_admitted) %>% 
+    left_join(prediction_LoHi) %>% 
+    mutate(predictionLo = ifelse(prediction < predictionLo, prediction, predictionLo), 
+           predictionHi = ifelse(prediction > predictionHi, prediction, predictionHi))
+  
 
   if(is.null(NDA_virus_prediction)){
     NDA_virus_prediction = NDA_virus_prediction_piece
@@ -154,6 +167,8 @@ for(virus_index in 1:9){
 
 NDA_virus_prediction <- read_csv("output/NDA_virus_prediction.csv")
 
+
+
 NDA_virus_prediction_sejour = data_sejours %>% 
   group_by(IPP_sejour, NDA_pseudo) %>% 
   summarise(date_ent = min(date_ent), 
@@ -199,7 +214,7 @@ data_PCR_NDA %>%
   labs(x = "Predicted probability of positive test", fill = "True test result") + 
   theme_bw()
 
-ggsave("output/plots/xg_prediction.png", width = 20, height = 12, units = "cm")
+ggsave("output/plots/xg_prediction.png", width = 20, height = 12, units = "cm", dpi = 600)
 
 
 

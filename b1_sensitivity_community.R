@@ -26,7 +26,7 @@ hi_prev = c(prev = 1)
 
 prior_function <- function(par){
   prior_loglik = dunif(x = par["sensAdm"], min = 0.5, max = 1, log = T) + 
-    dbeta(x = par["falsPos"], shape1 = 1, shape2 = 1000, log = T)
+    dbeta(x = par["falsPos"], shape1 = 1, shape2 = 100, log = T)
     # dunif(x = par["falsPos"], min = 0, max = 0.3, log = T)
   
   #dbeta(x = par["sensAdm"], shape1 = 20, shape2 = 1, log = T) #+ 
@@ -38,8 +38,8 @@ prior_function <- function(par){
 }
 
 # X = seq(-0.2, 1.2, by = 0.01)
-# X = seq(0, 1, by = 0.01)
-# plot(X, dbeta(x = X, shape1 = 10, shape2 = 1), type = "l")
+X = seq(0, 1, by = 0.01)
+plot(X, dbeta(x = X, shape1 = 1, shape2 = 10), type = "l")
 # plot(X, dlnorm(x = X, meanlog = -2, sdlog = 0.3), type = "l")
 
 
@@ -56,7 +56,7 @@ if(F){ # use this to do a partial loop
   # for(this_virus in virus_order[!(virus_order %in% virus_done)]){
 }
 
-this_virus = virus_vec[6]
+this_virus = virus_vec[3]
 # for(this_virus in setdiff(virus_order, "InfluenzaNT")){
 for(this_virus in virus_vec){
 
@@ -71,10 +71,10 @@ for(this_virus in virus_vec){
     filter(resultatbis %in% c("POSITIVE", "NEGATIVE")) %>% 
     filter(Virus == this_virus) %>% 
     filter(testday < big_day_limit) %>% 
-    group_by(IPP_sejour) %>% 
+    group_by(IPP_sejour, age_group, season_admitted) %>% 
     mutate(knownCommunity = as.numeric(any((testday < acute_day_limit) & resultatbis == "POSITIVE"))) %>% 
     ungroup %>% 
-    transmute(patient_id = IPP_sejour, testday, y = (0:1)[match(resultatbis, c("NEGATIVE", "POSITIVE"))], knownCommunity) 
+    transmute(patient_id = IPP_sejour, age_group, season_admitted, testday, y = (0:1)[match(resultatbis, c("NEGATIVE", "POSITIVE"))], knownCommunity) 
     
 
   print("get dataset of community infections")
@@ -88,6 +88,12 @@ for(this_virus in virus_vec){
     ungroup %>% 
     pull(knownCommunity) %>% mean
   
+  lowerbound_prev_table <- this_dataset %>% 
+    select(patient_id, age_group, knownCommunity) %>% 
+    unique %>% 
+    group_by(age_group) %>% 
+    summarise(prev = mean(knownCommunity))
+  
   
   # this_dataset_knownCommunity %>% 
   #   group_by(testday) %>% 
@@ -100,9 +106,10 @@ for(this_virus in virus_vec){
   while(run){
   
     print("begin MCMC")
-    mcmc_res <- modMCMC(niter = 5000, updatecov = 100, verbose = 100, 
+    mcmc_res <- modMCMC(niter = 1000, updatecov = 100, verbose = 100, 
                         f = calc_loglik_wrapper, 
                         prior = prior_function,
+                        FUN = calculate_remaining_sensitivity, 
                         p = start_par, jump = jump_par, lower = lo_par, upper = hi_par, 
                         unfit_pars = c(prev = 1),
                         dt = as.data.table(this_dataset_knownCommunity))
@@ -111,8 +118,7 @@ for(this_virus in virus_vec){
     #                                        unfit_pars = c(prev = 1)
     #                                        this_dataset = this_dataset, return_pinfected = T) %>% 
     #   mutate(Virus = this_virus)
-    
-
+  
     if(interactive){
       mcmc_res %>% plot
     } else {
@@ -128,7 +134,7 @@ for(this_virus in virus_vec){
     plot2 <- this_dataset_knownCommunity %>% 
       group_by(testday) %>% 
       summarise(p_pos = mean(y), total = n()) %>% 
-      mutate(remaining_sensitivity = calculate_remaining_sensitivity(mcmc_res$bestpar["sensAdm"], mcmc_res$bestpar["dailClr"], testday)) %>% 
+      mutate(remaining_sensitivity = calculate_remaining_sensitivity(mcmc_res$bestpar, t = testday)) %>% 
       mutate(expected_positive = remaining_sensitivity*1) %>% #assume prev in this group is 1
       ungroup %>% 
       ggplot(aes(x = testday)) + 

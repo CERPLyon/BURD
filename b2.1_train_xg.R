@@ -20,9 +20,13 @@ nrounds = as.numeric(cmds[2])
 optimise = (cmds[3] == "optimise")
 auc = (cmds[4] == "auc")
 execute = (cmds[5] == "execute")
+uncertainty = (cmds[6] == "uncertainty")
 # virus_index = 9
 # nrounds = 5000
-# execute_only = F
+# optimise = F
+# auc = F
+# execute = F
+# uncertainty = T
 
 # print(cmds)
 # print(c(virus_index, nrounds, execute_only))
@@ -142,5 +146,59 @@ if(execute){
   
 }
 
+if(uncertainty){
+  n_training = nrow(data_NDA_sparse_train)
+  # i = 1
+  n_boots = 1000
+  for(i in 1:n_boots){
+    print(paste("boot", i))
+    
+    bootstrap_data_NDA_sparse_train <- data_NDA_sparse_train[sample(n_training, size = n_training, replace = T), ]
+    print("run XGBoost bootstrap")
+    boot_xg_out <- xgboost(x = bootstrap_data_NDA_sparse_train[, -1], 
+                           y = factor(bootstrap_data_NDA_sparse_train[, 1], levels = c(0, 1)), 
+                           # xgb_model = bstSparse,
+                           # objective = "binary:logistic",
+                           params = best_params, 
+                           nrounds = best_nrounds,
+                           # max_depth = 10, 
+                           # nthreads = 2, 
+                           # min_child_weight = 1, 
+                           # objective = "binary:logistic", 
+                           
+                           # params = xgparams, 
+                           verbosity = 0
+    )
+    
+    
+    boot_prediction_allNDA <- predict(boot_xg_out, newdata = data_NDA_sparse[,-1], type = "response")
+    
+    boot_NDA_virus_prediction_piece <- tibble(boot = i, NDA_pseudo = data_NDA_thisVirus$NDA_pseudo, season_admitted = data_NDA_thisVirus$season_admitted, Virus = this_virus, prediction = boot_prediction_allNDA) %>% 
+      mutate(prediction = ifelse((Virus != "SARS-CoV-2") | (season_admitted %in% season_vec[-(1:3)]), prediction, 0)) %>% 
+      select(-season_admitted)
+    
+    
+    if(i == 1){
+      boot_NDA_virus_prediction = boot_NDA_virus_prediction_piece
+    } else {
+      boot_NDA_virus_prediction = rbind(boot_NDA_virus_prediction, 
+                                     boot_NDA_virus_prediction_piece)
+    }
+    
+    boot_NDA_virus_prediction %>% 
+      group_by(NDA_pseudo, Virus) %>% 
+      summarise(predictionLo = quantile(prediction, 0.025), predictionHi = quantile(prediction, 0.975)) %>% 
+      write_csv2(paste0("ml/bootPredictions_", output_stem, ".csv"))
+    
+    # boot_NDA_virus_prediction %>% 
+    #   pivot_wider(id_cols = c("NDA_pseudo", "Virus"), names_from = "boot", values_from = "prediction") %>% 
+    #   write_csv2(paste0("ml/bootPredictions_", output_stem, ".csv"))
+    
+  }
+  
+
+  
+  
+}
 
 print("end")
