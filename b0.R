@@ -23,12 +23,13 @@ age_vec = c("0-1", "2-4", "5-17", "18-64", "65-79", "80+")
 # load the FIRESP data (not the biomarker data until necessary, it's big)
 # path.data="Z:/FIRESP 2/data/"
 path.out = "Z:/FIRESP 2/output/"
+# path.out = "Z:/FIRESP 2/output/Before IPP_sejour_noreadm30/"
 
 tmp_savefile = paste0(path.out, "clean_tmp.RData")
 biomarker_savefile = paste0(path.out, "biomarker_tmp.RData")
 bact_savefile = paste0(path.out, "bact_tmp.RData")
 
-load(tmp_savefile)
+load(tmp_savefile, verbose = T)
 load(biomarker_savefile)
 load(bact_savefile)
 
@@ -51,7 +52,7 @@ data_PCR_sejour_collapseSubtypes <- data_PCR_sejour_age %>%
   filter(Virus != "Enterovirus", Virus != "InfluenzaNT") %>% 
   mutate(Virus = fct_collapse(Virus, RVEV = c("Rhinovirus", "Enterovirus/Rhinovirus"))) %>% 
   mutate(Virus = factor(Virus, virus_vec)) %>% 
-  group_by(IPP_alea, IPP_sejour, NDA_pseudo, NDA_pseudo_ordre, type_sej, Virus, season_admitted, year_admitted, week_admitted, pandemic_status, age, age_group, date_ent_sejour, date_preleve, testday, ordre) %>% 
+  group_by(IPP_alea, IPP_sejour_noreadmin30, IPP_sejour, NDA_pseudo, NDA_pseudo_ordre, type_sej, Virus, season_admitted, year_admitted, week_admitted, pandemic_status, age, age_group, date_ent_sejour, date_preleve, testday, ordre) %>% 
   summarise(resultatbis = case_when(any(resultatbis == "POSITIVE") ~ "POSITIVE", 
                                     any(resultatbis == "NEGATIVE") ~ "NEGATIVE", 
                                     T ~ "UNINTERPRETABLE"))

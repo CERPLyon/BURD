@@ -170,6 +170,8 @@ data_PCR_sejour_collapseSubtypes %>%
 # ggsave("plots/data_knownCommunity.png", width = 20, height = 14, units = "cm")
 ggsave("output/plots/data_model_wholeSample.png", width = 22, height = 14, units = "cm")
 
+
+
 data_PCR_sejour_collapseSubtypes %>%
   filter(Virus != "InfluenzaNT") %>%
   filter(testday < big_day_limit) %>%

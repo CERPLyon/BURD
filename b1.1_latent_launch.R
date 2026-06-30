@@ -20,7 +20,7 @@ minRows_forCI = 200
 # consider the first 100 days since admission to estimate the model
 big_day_limit = 28 #number of days since admission for estimating the model
 acute_day_limit = 3 #threshold to define a known community infection
-suspected_day_limit = 7 #threshold for a suspcected community infection
+suspected_day_limit = 7 #threshold for a suspected community infection
 
 
 # basic model control parameters

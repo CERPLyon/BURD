@@ -7,6 +7,16 @@ adjustment_col = c(Unadjusted = "#1a80bb", Adjusted = "#ea801c")
 # library(ISOweek)
 
 # big bar plot for age
+patient_outcomes_inc_master$burden %>% table
+patient_outcomes_inc_master %>% 
+  filter(burden == "Hospital_admission") %>% 
+  filter(Adjustment %in% c("knownCommunity", "probableCommunity", "withLate")) %>% 
+  ggplot(aes(x = monthAdmitted, y = n, colour = Adjustment)) + 
+  geom_line() + 
+  # geom_bar(stat = "identity", position = "dodge") + 
+  facet_grid(Virus ~ age_group, scales = "free_y") + theme_bw()
+
+ggsave("output/plots/nos_results.png", units = "cm", width = 35, height = 20)
 
 patient_outcomes_inc_master %>% 
   filter(!(seasonAdmitted %in% c("20/21", "21/22"))) %>% 
@@ -29,7 +39,9 @@ patient_outcomes_inc_master %>%
            (burden == "Hospital_deathPlus30" & Adjustment == "Adjusted")) %>% 
   mutate(burden = fct_collapse(burden, Hospital_death = c("Hospital_deathRaw", "Hospital_deathPlus30"))) %>% 
   
-  mutate(burden = fct_relabel(burden, .fun = ~gsub("_", "\n", .x))) %>% 
+  mutate(burden = fct_relabel(burden, .fun = ~gsub("_", "\n", .x))) -> admission_incidence_age_CI_plot
+
+admission_incidence_age_CI_plot %>% 
   # filter((burden %in% c("Emergency_only", "Hospital_admission"))) %>%
   # filter(type_sej == "HOSPITALISATION") %>%
   ggplot(aes(x = age_group, y = Inc1e5, colour = Adjustment, fill = Adjustment)) + 
@@ -41,7 +53,7 @@ patient_outcomes_inc_master %>%
   scale_colour_manual(values = adjustment_col) +
   scale_fill_manual(values = adjustment_col) +
   theme_bw() + 
-  guides(colour = F) +
+  guides(colour = "none") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) + 
   labs(x = "Age group", y = "Incidence per 100 000 catchment population", fill = "")
 
@@ -178,6 +190,92 @@ admission_incidence_month_CI_plot %>%
 
 ggsave("output/plots/admission_incidence_month_CI_others.png", width = 30, height = 15, units = "cm", dpi = 600)
 
+# ratio plots
+
+ratio_age_CI <- admission_incidence_age_CI_plot %>% 
+  pivot_wider(id_cols = c("age_group", "Virus", "type_sej", "burden"), names_from = "Adjustment", values_from = c("Inc1e5", "Lo", "Hi")) %>% 
+  select(-Lo_Unadjusted, -Hi_Unadjusted) %>% 
+  mutate(Ratio = Inc1e5_Adjusted/Inc1e5_Unadjusted, 
+         RatioLo = Lo_Adjusted/Inc1e5_Unadjusted, 
+         RatioHi = Hi_Adjusted/Inc1e5_Unadjusted)
+
+ratio_age_CI %>% 
+  # filter((burden %in% c("Emergency_only", "Hospital_admission"))) %>%
+  # filter(type_sej == "HOSPITALISATION") %>%
+  mutate(across(starts_with("Ratio"), ~ifelse(is.finite(.x), .x, NA))) %>% 
+  ggplot(aes(x = age_group, y = Ratio)) + 
+  geom_point(aes(y = Ratio)) + 
+  geom_errorbar(aes(ymin = RatioLo, ymax = RatioHi)) + 
+  geom_label(aes(label = round(Ratio, 1), y = 0.5), size = 2) + 
+  facet_grid(burden~Virus
+             , scales = "free_y"
+  ) + 
+  theme_bw() + 
+  guides(colour = "none") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) + 
+  labs(x = "Age group", y = "Adjustment ratio", fill = "") + 
+  coord_cartesian(ylim = c(0, 5))
+
+ggsave("output/plots/ratio_age_CI.png", width = 30, height = 16, units = "cm", dpi = 600)
+
+
+ratio_season_CI <- admission_incidence_season_CI_plot %>% 
+  pivot_wider(id_cols = c("seasonAdmitted", "Virus", "type_sej", "burden"), names_from = "Adjustment", values_from = c("Inc1e5", "Lo", "Hi")) %>% 
+  select(-Lo_Unadjusted, -Hi_Unadjusted) %>% 
+  mutate(Ratio = Inc1e5_Adjusted/Inc1e5_Unadjusted, 
+         RatioLo = Lo_Adjusted/Inc1e5_Unadjusted, 
+         RatioHi = Hi_Adjusted/Inc1e5_Unadjusted)
+
+ratio_season_CI %>% 
+  # filter((burden %in% c("Emergency_only", "Hospital_admission"))) %>%
+  # filter(type_sej == "HOSPITALISATION") %>%
+  mutate(across(starts_with("Ratio"), ~ifelse(is.finite(.x), .x, NA))) %>% 
+  ggplot(aes(x = seasonAdmitted, y = Ratio)) + 
+  geom_point(aes(y = Ratio)) + 
+  geom_errorbar(aes(ymin = RatioLo, ymax = RatioHi)) + 
+  geom_label(aes(label = round(Ratio, 1), y = 0.5), size = 1.5) + 
+  facet_grid(burden~Virus
+             , scales = "free_y"
+  ) + 
+  theme_bw() + 
+  guides(colour = "none") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) + 
+  labs(x = "Season", y = "Adjustment ratio", fill = "") + 
+  coord_cartesian(ylim = c(0, 5))
+
+ggsave("output/plots/ratio_season_CI.png", width = 30, height = 16, units = "cm", dpi = 600)
+
+ratio_month_CI <- admission_incidence_month_CI_plot %>% 
+  select(-seasonAdmitted) %>% 
+  pivot_wider(id_cols = c("monthAdmitted", "age_group", "Virus"), names_from = "Adjustment", values_from = c("Inc1e5", "Lo", "Hi")) %>% 
+  select(-Lo_Unadjusted, -Hi_Unadjusted) %>% 
+  mutate(Ratio = Inc1e5_Adjusted/Inc1e5_Unadjusted, 
+         RatioLo = Lo_Adjusted/Inc1e5_Unadjusted, 
+         RatioHi = Hi_Adjusted/Inc1e5_Unadjusted)
+
+ratio_month_CI %>% 
+  mutate(across(starts_with("Ratio"), ~ifelse(is.finite(.x), .x, NA))) %>% 
+  filter(Virus %in% c("InfluenzaA", "InfluenzaB", "RSV", "SARS-CoV-2")) %>% 
+  # filter((burden %in% c("Emergency_only", "Hospital_admission"))) %>%
+  # filter(type_sej == "HOSPITALISATION") %>%
+  ggplot(aes(x = monthAdmitted, colour = Virus, fill = Virus, group = Virus)) + 
+  geom_line(aes(y = Ratio)) + 
+  geom_point(aes(y = Ratio)) + 
+  geom_ribbon(aes(ymin = RatioLo, ymax = RatioHi), alpha = 0.5) + 
+  facet_grid(age_group~.
+             , scales = "free_y"
+  ) + 
+  theme_bw() + 
+  guides(colour = "none") +
+  scale_colour_manual(values = virus_col) + 
+  scale_fill_manual(values = virus_col) + 
+  # theme(axis.text.x = element_text(angle = 45, hjust = 1)) + 
+  labs(x = "Month", y = "Adjustment ratio", fill = "") +
+  scale_x_date(date_breaks = "1 year", date_labels = "%Y") + 
+  coord_cartesian(ylim = c(0, 5))
+
+ggsave("output/plots/ratio_month_CI.png", width = 30, height = 16, units = "cm", dpi = 600)
+
 
 # proportion plot
 proportion_plot <- patient_outcomes_inc_master %>% 
@@ -240,6 +338,8 @@ proportion_plot_season %>%
   group_by(burden, seasonAdmitted, Adjustment) %>% 
   mutate(p = Inc1e5/sum(Inc1e5, na.rm = T)) %>% 
   select(Adjustment, burden, seasonAdmitted, Virus, p) %>% 
+  arrange(burden, Virus, seasonAdmitted, Adjustment) %>% 
+  
   mutate(p = (p*100) %>% round(1) %>% format(nsmall = 1) %>% {ifelse(. == "  NaN", "", .)} %>% paste0("%")) %>% 
   pivot_wider(id_cols = c("burden", "Virus"), names_from = c("seasonAdmitted", "Adjustment"), values_from = "p") %>% 
   arrange(burden) %>% 
@@ -248,13 +348,14 @@ proportion_plot_season %>%
 
 proportion_plot_season %>% 
   mutate(burden = fct_relabel(burden, .fun = ~gsub("_", "\n", .x))) %>% 
-  ggplot(aes(x = seasonAdmitted, y = Inc1e5, fill = Virus)) + geom_bar(stat = "identity", position = "fill") + 
-  facet_grid(burden~Adjustment) + 
+  ggplot(aes(x = Adjustment, y = Inc1e5, fill = Virus)) + geom_bar(stat = "identity", position = "fill") + 
+  facet_grid(burden~seasonAdmitted) + 
   scale_fill_manual(values = virus_col) + 
   # scale_alpha_manual(values = c(Unadjusted = 0.7, Adjusted = 1)) + 
   scale_y_continuous(labels = scales::percent) + 
   labs(y = "Proportion contribution", x = "") + 
-  theme_bw()
+  theme_bw() + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 ggsave("output/plots/proportion_incidence_season.png", width = 25, height = 25, units = "cm", dpi = 600)
 
@@ -275,25 +376,27 @@ proportion_plot_age <- patient_outcomes_inc_master %>%
            (burden == "Hospital_deathPlus30" & Adjustment == "Adjusted")) %>% 
   mutate(burden = fct_collapse(burden, Hospital_death = c("Hospital_deathRaw", "Hospital_deathPlus30")))
 
+
 proportion_plot_age %>% 
   group_by(burden, age_group, Adjustment) %>% 
   mutate(p = Inc1e5/sum(Inc1e5, na.rm = T)) %>% 
   select(Adjustment, burden, age_group, Virus, p) %>% 
+  arrange(burden, Virus, age_group, Adjustment) %>% 
   mutate(p = (p*100) %>% round(1) %>% format(nsmall = 1) %>% {ifelse(. == "  NaN", "", .)} %>% paste0("%")) %>% 
-  pivot_wider(id_cols = c("burden", "Virus"), names_from = c("age_group", "Adjustment"), values_from = "p") %>% 
-  arrange(burden) %>% 
+  pivot_wider(id_cols = c("burden", "Virus"), names_from = c("Adjustment", "age_group"), values_from = "p") %>% 
+  arrange(burden) %>%
   write_csv2("output/tables/proportion_incidence_age.csv")
-
 
 proportion_plot_age %>% 
   mutate(burden = fct_relabel(burden, .fun = ~gsub("_", "\n", .x))) %>% 
-  ggplot(aes(x = age_group, y = Inc1e5, fill = Virus)) + geom_bar(stat = "identity", position = "fill") + 
-  facet_grid(burden~Adjustment) + 
+  ggplot(aes(x = Adjustment, y = Inc1e5, fill = Virus)) + geom_bar(stat = "identity", position = "fill") + 
+  facet_grid(burden~age_group) + 
   scale_fill_manual(values = virus_col) + 
   # scale_alpha_manual(values = c(Unadjusted = 0.7, Adjusted = 1)) + 
   scale_y_continuous(labels = scales::percent) + 
   labs(y = "Proportion contribution", x = "") + 
-  theme_bw()
+  theme_bw() + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 ggsave("output/plots/proportion_incidence_age.png", width = 25, height = 25, units = "cm", dpi = 600)
 
@@ -428,30 +531,6 @@ patient_outcomes_inc_master %>%
 
 ggsave("output/plots/area_vs_firesptotal.png", width = 25, height = 10, units = "cm", dpi = 600)
 
-
-
-
-# make a patient_outcomes_inc master table
-# which then aggregates to age, season, month
-# and the catchment pop is added after this aggregation
-
-# ONE BY SEASON 
-# ONE BY MONTHS
-
-# COMPARISON WITH Senti
-
-# THEN ONTO DEATH
-
-# Supplement
-# LATENT PARAMETERS
-# DECAY PLOTS
-# CLASSIFICATION PLOTS
-# IMPORTANCE
-# Add in COMPARISON of PRAUC and BASELINE
-
-# SOMETHING ABOUT DEATH(Mfh, Afh etc)
-
-# COMPARISON WITH Li 
 
 
 

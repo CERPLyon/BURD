@@ -26,7 +26,9 @@
 #             n_afterCorrection) %>% 
 #   mutate(Virus = factor(Virus, virus_vec)) %>% 
 #   arrange(Virus) %>% 
-  
+
+
+
 patient_outcomes_inc_master %>% 
   filter(burden == "Hospital_admission") %>%
   filter(!seasonAdmitted %in% c("20/21", "21/22")) %>% 
@@ -34,17 +36,24 @@ patient_outcomes_inc_master %>%
   summarise(n = sum(n, na.rm = T)) %>% 
   pivot_wider(id_cols = "Virus", names_from = "Adjustment", values_from = "n") %>% 
   transmute(Virus, 
-            Confirmed = knownCommunityRaw, 
+            # Confirmed = knownCommunityRaw, 
+            Confirmed = knownCommunity, 
             Suspected = probableCommunity,
-            `Inferred (late)`  = paste0(round(withLate - knownCommunity, 1), "\n(", round(withLateLo - knownCommunity, 1), ",", round(withLateHi - knownCommunity, 1), ")"), 
-            `Inferred (untested)`  = paste0(round(withLateUntested - knownCommunity, 1), "\n(", round(withLateUntestedLo - knownCommunity, 1), ",", round(withLateUntestedHi - knownCommunity, 1), ")"), 
-            `Inferred (total)`  = paste0(round(withLateUntested, 1), "\n(", round(withLateUntestedLo, 1), ",", round(withLateUntestedHi, 1), ")"), 
+            `Inferred (late)`  = paste0(round(withLate - knownCommunity, 1), "\n(", round(withLateLo - knownCommunity, 1), ", ", round(withLateHi - knownCommunity, 1), ")"), 
+            # `Inferred (untested)`  = paste0(round(withLateUntested - knownCommunity, 1), "\n(", round(withLateUntestedLo - knownCommunity, 1), ",", round(withLateUntestedHi - knownCommunity, 1), ")"), 
+            `Inferred (untested)`  = paste0(round(withLateUntested - withLate, 1), "\n(", round(withLateUntestedLo - withLateLo, 1), ", ", round(withLateUntestedHi - withLateHi, 1), ")"), 
+            `Inferred (total)`  = paste0(round(withLateUntested, 1), "\n(", round(withLateUntestedLo, 1), ", ", round(withLateUntestedHi, 1), ")"), 
             # n_corrected = n_afterCorrection - n_knownCommunity, 
-            `Total (after adjustment)`  = paste0(round(afterCorrection, 1), "\n(", round(afterCorrectionLo, 1), ",", round(afterCorrectionHi, 1), ")")
+            `Total (after adjustment)`  = paste0(round(afterCorrection, 1), "\n(", round(afterCorrectionLo, 1), ", ", round(afterCorrectionHi, 1), ")"), 
+            
+            Ratio = paste0(round((afterCorrection)/knownCommunity, 2), 
+                           "\n(", round((afterCorrectionLo)/knownCommunity, 2), 
+                           ", ", round((afterCorrectionHi)/knownCommunity, 2), ")")
   ) %>% 
   mutate(Virus = factor(Virus, virus_vec)) %>% 
-  arrange(Virus) %>% 
+  arrange(Virus) %>%
   write_csv2(file = "output/tables/totals_corrected.csv")
+
 
 
 patient_outcomes_inc_master %>% 
@@ -60,9 +69,12 @@ patient_outcomes_inc_master %>%
 deathRate_age_SNDS %>% 
   left_join(dp_deaths_FIRESP) %>% 
   mutate(deathRate_FIRESP = deaths_FIRESP/nDP) %>% 
-  filter(nDP >= 40) %>% 
+  filter(nDP >= 100) %>% 
+  filter(type_sej == "HOSPITALISATION") %>%
   transmute(DP = gsub("_", "", DP), age_group, deathRate_FIRESP, deathRate_within30) %>% 
   arrange(-deathRate_FIRESP) %>% 
+  mutate(rank = 1:n()) %>% 
+  # select(rank, everything()) %>% 
   write_csv2(file = "output/tables/deathRates.csv")
 
 

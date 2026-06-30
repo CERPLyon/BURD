@@ -96,16 +96,17 @@ deathRate_age_SNDS %>%
 #### investigation, not essential
 dp_deaths_FIRESP <- data_sejours %>% 
     # filter(type_sej == "HOSPITALISATION") %>%
-    group_by(IPP_sejour) %>%
-    mutate(DeathSejour = as.numeric(any(mode_sor == "DEATH")), YearDischarged = year(date_sor_sejour)) %>%
-    transmute(age_group, IPP_alea , IPP_sejour , type_sej, DP, mode_sor, YearDischarged, DeathSejour) %>%
-    # filter(IPP_alea == zz) %>%
-    group_by(YearDischarged
-             , age_group
-             , type_sej
-             , DP
-    ) %>%
-    summarise(deaths_FIRESP = n_distinct(IPP_sejour[DeathSejour %in% 1]), nDP = n_distinct(IPP_sejour))
+  filter(!(season_admitted %in% c("20/21", "21/22"))) %>% 
+  group_by(IPP_sejour) %>%
+  mutate(DeathSejour = as.numeric(any(mode_sor == "DEATH")), YearDischarged = year(date_sor_sejour)) %>%
+  transmute(age_group, IPP_alea , IPP_sejour , type_sej, DP, mode_sor, YearDischarged, DeathSejour) %>%
+  # filter(IPP_alea == zz) %>%
+  group_by(age_group
+           # , YearDischarged
+           , type_sej
+           , DP
+  ) %>%
+  summarise(deaths_FIRESP = n_distinct(IPP_sejour[DeathSejour %in% 1]), nDP = n_distinct(IPP_sejour))
 # %>% 
 #   group_by(age_group, YearDischarged, type_sej, DP) %>% 
 #   summarise(deaths_FIRESP = mean(deaths), nDP = mean(nDP))
