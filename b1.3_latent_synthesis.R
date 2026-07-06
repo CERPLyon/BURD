@@ -21,7 +21,7 @@ for(this_virus in virus_vec){
   
   
   print("get dataset of community infections")
-  this_dataset_inclPandemic_knownCommunity <- this_dataset %>% 
+  this_dataset_inclPandemic_knownCommunity <- this_dataset_inclPandemic %>% 
     filter(knownCommunity == 1)
   
   
@@ -258,7 +258,7 @@ ggsave("output/plots/data_model_knownCommunity_CI.png", width = 30, height = 20,
 
 
 
-validParams %>% 
+data_model_wholeSample_CI <- validParams %>% 
   mutate(i = 1:n()) %>% 
   # pivot_longer(-c("Virus", "i", "Loglik", "deltaLoglik"), names_to = c("Parameter")) %>% 
   # mutate(age_group = ifelse(grepl("prev", Parameter), gsub("prev", "", Parameter), NA) %>% factor(levels = age_vec)) %>% 
@@ -291,7 +291,9 @@ validParams %>%
               group_by(Virus, age_group, testday) %>%
               summarise(p_pos = mean(y), total = n())
   ) %>% 
-  mutate(Virus = factor(Virus, virus_vec)) %>%
+  mutate(Virus = factor(Virus, virus_vec))
+
+data_model_wholeSample_CI %>% 
   ggplot(aes(x = testday)) + 
   # geom_line(aes(y = model, colour = "Community infection"), size = 1) +
   # geom_line(aes(y = falsPos, colour = "False positive\nOR nosocomial infection"), size = 1) +
@@ -314,8 +316,7 @@ validParams %>%
   labs(x = "Days after admission", y = "Proportion positive", size = "Number of samples", colour = "Model") + 
   theme_bw()
 
-ggsave("output/plots/data_model_wholeSample_CI.png", width = 22, height = 14, units = "cm", dpi = 600)
-
+ggsave("output/plots/data_model_wholeSample_CI.png", width = 22, height = 24, units = "cm", dpi = 600)
 
 
 

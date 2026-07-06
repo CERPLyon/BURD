@@ -141,7 +141,7 @@ if(execute){
   
   
   print("save training object")
-  # save(xg_out, file = paste0("ml/trainXG_", output_stem, ".RData"))
+  save(xg_out, file = paste0("ml/trainXG_", output_stem, ".RData"))
   xgb.save(xg_out, fname = paste0("ml/trainXG_", output_stem, ".ubj"))
   
 }

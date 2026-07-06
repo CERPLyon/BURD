@@ -4,10 +4,12 @@ virus_col = viridisLite::turbo(length(virus_vec)) %>%
 adjustment_col = c(Unadjusted = "#1a80bb", Adjusted = "#ea801c")
 
 
-# library(ISOweek)
+virus_col[7:9] <- c("#F28E2BFF",
+                    "#D64B00FF",
+                    "#8E0152FF")
 
 # big bar plot for age
-patient_outcomes_inc_master$burden %>% table
+
 patient_outcomes_inc_master %>% 
   filter(burden == "Hospital_admission") %>% 
   filter(Adjustment %in% c("knownCommunity", "probableCommunity", "withLate")) %>% 
@@ -59,6 +61,46 @@ admission_incidence_age_CI_plot %>%
 
 ggsave("output/plots/admission_incidence_age_CI.png", width = 30, height = 16, units = "cm", dpi = 600)
 
+admission_incidence_age_CI_plot %>% 
+  filter(!(Virus %in% c("ADV", "PIV", "hCoV"))) %>% 
+  # filter((burden %in% c("Emergency_only", "Hospital_admission"))) %>%
+  # filter(type_sej == "HOSPITALISATION") %>%
+  ggplot(aes(x = age_group, y = Inc1e5, colour = Adjustment, fill = Adjustment)) + 
+  geom_bar(stat = "identity", position = "dodge", alpha = 0.5) + 
+  geom_errorbar(aes(ymin = Lo, ymax = Hi, colour = Adjustment), width = 0.2, position = position_nudge(x = 0.25)) +
+  facet_grid(burden~Virus
+             , scales = "free_y"
+  ) + 
+  scale_colour_manual(values = adjustment_col) +
+  scale_fill_manual(values = adjustment_col) +
+  theme_bw() + 
+  guides(colour = "none") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) + 
+  labs(x = "Age group", y = "Incidence per 100 000 catchment population", fill = "")
+
+ggsave("output/plots/admission_incidence_age_CI_big6.png", width = 25, height = 16, units = "cm", dpi = 600)
+
+
+admission_incidence_age_CI_plot %>% 
+  filter((Virus %in% c("ADV", "PIV", "hCoV"))) %>% 
+  # filter((burden %in% c("Emergency_only", "Hospital_admission"))) %>%
+  # filter(type_sej == "HOSPITALISATION") %>%
+  ggplot(aes(x = age_group, y = Inc1e5, colour = Adjustment, fill = Adjustment)) + 
+  geom_bar(stat = "identity", position = "dodge", alpha = 0.5) + 
+  geom_errorbar(aes(ymin = Lo, ymax = Hi, colour = Adjustment), width = 0.2, position = position_nudge(x = 0.25)) +
+  facet_grid(burden~Virus
+             , scales = "free_y"
+  ) + 
+  scale_colour_manual(values = adjustment_col) +
+  scale_fill_manual(values = adjustment_col) +
+  theme_bw() + 
+  guides(colour = "none") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) + 
+  labs(x = "Age group", y = "Incidence per 100 000 catchment population", fill = "")
+
+ggsave("output/plots/admission_incidence_age_CI_small3.png", width = 15, height = 16, units = "cm", dpi = 600)
+
+
 
 # line plot for season
 
@@ -102,10 +144,49 @@ admission_incidence_season_CI_plot %>%
   theme_bw() + 
   guides(alpha = F) + 
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) + 
-  labs(x = "Season admitted", y = "Incidence per 100 000 catchment population")
+  labs(x = "Season admitted", y = "Incidence per 100 000 catchment population") 
+
 
 ggsave("output/plots/admission_incidence_season_CI.png", width = 40, height = 13, units = "cm", dpi = 600)
 
+
+admission_incidence_season_CI_plot %>% 
+  filter(!(Virus %in% c("ADV", "PIV", "hCoV"))) %>% 
+  # filter((burden %in% c("Emergency_only", "Hospital_admission"))) %>%
+  ggplot(aes(x = seasonAdmitted, colour = Adjustment, group = Adjustment)) + 
+  # geom_bar(stat = "identity", position = "dodge") + 
+  geom_ribbon(aes(ymin = Lo, ymax = Hi, fill = "Adjusted"), alpha = 0.3, colour = NA)+ 
+  geom_line(aes(y = Inc1e5))+ 
+  facet_grid(burden~Virus
+             , scales = "free_y"
+  ) + 
+  scale_colour_manual(values = adjustment_col) +
+  scale_fill_manual(values = adjustment_col, guide="none") +
+  theme_bw() + 
+  guides(alpha = F) + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) + 
+  labs(x = "Season admitted", y = "Incidence per 100 000 catchment population")
+
+ggsave("output/plots/admission_incidence_season_CI_big6.png", width = 30, height = 13, units = "cm", dpi = 600)
+
+admission_incidence_season_CI_plot %>% 
+  filter((Virus %in% c("ADV", "PIV", "hCoV"))) %>% 
+  # filter((burden %in% c("Emergency_only", "Hospital_admission"))) %>%
+  ggplot(aes(x = seasonAdmitted, colour = Adjustment, group = Adjustment)) + 
+  # geom_bar(stat = "identity", position = "dodge") + 
+  geom_ribbon(aes(ymin = Lo, ymax = Hi, fill = "Adjusted"), alpha = 0.3, colour = NA)+ 
+  geom_line(aes(y = Inc1e5))+ 
+  facet_grid(burden~Virus
+             , scales = "free_y"
+  ) + 
+  scale_colour_manual(values = adjustment_col) +
+  scale_fill_manual(values = adjustment_col, guide="none") +
+  theme_bw() + 
+  guides(alpha = F) + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.position = "none") + 
+  labs(x = "Season admitted", y = "Incidence per 100 000 catchment population")
+
+ggsave("output/plots/admission_incidence_season_CI_small3.png", width = 15, height = 16, units = "cm", dpi = 600)
 
 
 # big bar plot for months
@@ -516,7 +597,7 @@ patient_outcomes_inc_master %>%
   ggplot(aes(x = monthAdmitted)) + 
   geom_area(aes(y = Inc1e5, fill = Virus)) + 
   # geom_line(aes(y = totalInc1e5, linetype = "Total Inc")) + 
-  geom_line(aes(y = FIRESPInc1e5, colour = "FIRESP total")) + 
+  geom_line(aes(y = FIRESPInc1e5, colour = "Cohort total")) + 
   # geom_bar(stat = "identity", position = "dodge") + 
   facet_grid(Adjustment~.
              # , scales = "free_y"

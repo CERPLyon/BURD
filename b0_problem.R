@@ -43,7 +43,8 @@ testday_bardata %>%
   ggplot(aes(x = first_testday, fill = result)) + 
   geom_histogram(breaks = c(0:7)
                  ) + 
-  ggpp::geom_table(data = df, aes(x = x, y = y, label = tbs),
+  ggpp::geom_table(data = df 
+                     , aes(x = x, y = y, label = tbs),
                    inherit.aes = FALSE,
                    table.colnames = F, table.hjust = 1,
                    table.theme = gridExtra::ttheme_default(
@@ -60,4 +61,57 @@ testday_bardata %>%
   facet_wrap(.~Virus, scale = "free_y")
 
 ggsave(filename = "output/plots/testday_problem.png", width = 24, height = 16, units = "cm", dpi = 600)
+
+
+testday_bardata %>% 
+  filter(!(Virus %in% c("ADV", "PIV", "hCoV"))) %>% 
+  ggplot(aes(x = first_testday, fill = result)) + 
+  geom_histogram(breaks = c(0:7)
+  ) + 
+  ggpp::geom_table(data = df %>% 
+                     filter(!(Virus %in% c("ADV", "PIV", "hCoV")))
+                   , aes(x = x, y = y, label = tbs[1:6]),
+                   inherit.aes = FALSE,
+                   table.colnames = F, table.hjust = 1,
+                   table.theme = gridExtra::ttheme_default(
+                     core = list(
+                       core.just = "right",
+                       fg_params = list(cex = 0.5, lineheight = 0.6, col = "black"),  # shrink body rows
+                       bg_params = list(fill = "white", col = "darkgrey")
+                     )
+                   )) +
+  theme_bw() + 
+  labs(x = "Days after admission", fill = "Test result", y = "Patients") + 
+  scale_x_continuous(breaks = 0:6 + 0.5, labels = 0:6) + 
+  scale_fill_manual(values = c(NEGATIVE = "skyblue3", POSITIVE = "red")) + 
+  facet_wrap(.~Virus, scale = "free_y")
+
+ggsave(filename = "output/plots/testday_problem_big6.png", width = 24, height = 10, units = "cm", dpi = 600)
+
+testday_bardata %>% 
+  filter((Virus %in% c("ADV", "PIV", "hCoV"))) %>% 
+  ggplot(aes(x = first_testday, fill = result)) + 
+  geom_histogram(breaks = c(0:7)
+  ) + 
+  ggpp::geom_table(data = df %>% 
+                     filter((Virus %in% c("ADV", "PIV", "hCoV")))
+                   , aes(x = x, y = y, label = tbs[7:9]),
+                   inherit.aes = FALSE,
+                   table.colnames = F, table.hjust = 1,
+                   table.theme = gridExtra::ttheme_default(
+                     core = list(
+                       core.just = "right",
+                       fg_params = list(cex = 0.5, lineheight = 0.6, col = "black"),  # shrink body rows
+                       bg_params = list(fill = "white", col = "darkgrey")
+                     )
+                   )) +
+  theme_bw() + 
+  labs(x = "Days after admission", fill = "Test result", y = "Patients") + 
+  scale_x_continuous(breaks = 0:6 + 0.5, labels = 0:6) + 
+  scale_fill_manual(values = c(NEGATIVE = "skyblue3", POSITIVE = "red")) + 
+  facet_wrap(.~Virus, scale = "free_y")
+
+ggsave(filename = "output/plots/testday_problem_small3.png", width = 24, height = 7, units = "cm", dpi = 600)
+
+
 

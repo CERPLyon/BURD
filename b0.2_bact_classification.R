@@ -76,15 +76,20 @@ data_bact_classified <- data_bact_cleaned %>%
                                     T ~ "BACTERIA OTHER"))
 
 # SAVE FILES FOR ADRIEN
-data_bact_cleaned %>% select(IPP_alea, IPP_sejour, age_group, sample_type1:raw_taxon_label) %>% write_csv2(paste0("Z:/FIRESP 2/output/BactTreat/data_bact_cleaned.csv"))
-data_bact_classified %>% select(IPP_alea, IPP_sejour, age_group, sample_type1:classification) %>% write_csv2(paste0("Z:/FIRESP 2/output/BactTreat/data_bact_classified.csv"))
-data_treat %>% select(-NDA_alea) %>% write_csv2(paste0("Z:/FIRESP 2/output/BactTreat/data_treat.csv"))
-data_sejours %>% 
-  group_by(IPP_alea, IPP_sejour, date_ent_sejour, date_sor_sejour, type_sej, mode_sor) %>% 
-  summarise(anyICU = as.numeric(any(rea_SI %in% 1))) %>% 
-  relocate(mode_sor, .after = everything()) %>% 
-  ungroup %>% 
-  write_csv2(paste0("Z:/FIRESP 2/output/BactTreat/data_sejours_minimum.csv"))
+if(F){
+  data_bact_cleaned %>% select(IPP_alea, IPP_sejour, age_group, sample_type1:raw_taxon_label) %>% write_csv2(paste0("Z:/FIRESP 2/output/BactTreat/data_bact_cleaned.csv"))
+  data_bact_classified %>% select(IPP_alea, IPP_sejour, age_group, sample_type1:classification) %>% write_csv2(paste0("Z:/FIRESP 2/output/BactTreat/data_bact_classified.csv"))
+  data_treat %>% select(-NDA_alea) %>% write_csv2(paste0("Z:/FIRESP 2/output/BactTreat/data_treat.csv"))
+  
+  data_sejours %>% 
+    group_by(IPP_alea, IPP_sejour, date_ent_sejour, date_sor_sejour, type_sej, mode_sor) %>% 
+    summarise(anyICU = as.numeric(any(rea_SI %in% 1))) %>% 
+    relocate(mode_sor, .after = everything()) %>% 
+    ungroup %>% 
+    write_csv2(paste0("Z:/FIRESP 2/output/BactTreat/data_sejours_minimum.csv"))
+}
+
+
 
 bact_BPOpresent_NDA <- data_bact_classified %>% 
   filter(sample_type1 == "BPO") %>% 

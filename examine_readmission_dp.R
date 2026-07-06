@@ -31,7 +31,7 @@ data_sejours %>%
   left_join(cim10_ref %>% transmute(DP = paste0(code, "_"), cim10_description)) %>% 
   View
 
-  group_by(iIPP, nDP) %>% 
+group_by(iIPP, nDP) %>% 
   summarise(freq = n()) %>% 
   print(n = 100)
 

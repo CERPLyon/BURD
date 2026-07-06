@@ -28,7 +28,6 @@
 #   arrange(Virus) %>% 
 
 
-
 patient_outcomes_inc_master %>% 
   filter(burden == "Hospital_admission") %>%
   filter(!seasonAdmitted %in% c("20/21", "21/22")) %>% 
@@ -54,6 +53,39 @@ patient_outcomes_inc_master %>%
   arrange(Virus) %>%
   write_csv2(file = "output/tables/totals_corrected.csv")
 
+patient_outcomes_noreadm_inc_master %>% 
+  filter(burden == "Hospital_admission") %>%
+  filter(!seasonAdmitted %in% c("20/21", "21/22")) %>% 
+  group_by(Virus, Adjustment) %>% 
+  summarise(n = sum(n, na.rm = T)) %>% 
+  pivot_wider(id_cols = "Virus", names_from = "Adjustment", values_from = "n") %>% 
+  transmute(Virus, 
+            # Confirmed = knownCommunityRaw, 
+            Confirmed = knownCommunity, 
+            Suspected = probableCommunity,
+            `Inferred (late)`  = paste0(round(withLate - knownCommunity, 1), "\n(", round(withLateLo - knownCommunity, 1), ", ", round(withLateHi - knownCommunity, 1), ")"), 
+            # `Inferred (untested)`  = paste0(round(withLateUntested - knownCommunity, 1), "\n(", round(withLateUntestedLo - knownCommunity, 1), ",", round(withLateUntestedHi - knownCommunity, 1), ")"), 
+            `Inferred (untested)`  = paste0(round(withLateUntested - withLate, 1), "\n(", round(withLateUntestedLo - withLateLo, 1), ", ", round(withLateUntestedHi - withLateHi, 1), ")"), 
+            `Inferred (total)`  = paste0(round(withLateUntested, 1), "\n(", round(withLateUntestedLo, 1), ", ", round(withLateUntestedHi, 1), ")"), 
+            # n_corrected = n_afterCorrection - n_knownCommunity, 
+            `Total (after adjustment)`  = paste0(round(afterCorrection, 1), "\n(", round(afterCorrectionLo, 1), ", ", round(afterCorrectionHi, 1), ")"), 
+            
+            Ratio = paste0(round((afterCorrection)/knownCommunity, 2), 
+                           "\n(", round((afterCorrectionLo)/knownCommunity, 2), 
+                           ", ", round((afterCorrectionHi)/knownCommunity, 2), ")")
+  ) %>% 
+  mutate(Virus = factor(Virus, virus_vec)) %>% 
+  arrange(Virus)%>%
+  write_csv2(file = "output/tables/totals_corrected_noreadm.csv")
+
+
+rbind(read_csv2("output/tables/totals_corrected.csv") %>% mutate(Readmissions = "Separated"),
+read_csv2("output/tables/totals_corrected_noreadm.csv") %>% mutate(Readmissions = "Combined")) %>% 
+  mutate(Virus = factor(Virus, levels = virus_vec), 
+         Readmissions = factor(Readmissions, c("Separated", "Combined"))) %>% 
+  relocate("Readmissions", .after = "Virus") %>% 
+  arrange(Virus, Readmissions) %>% 
+  write_csv2(file = "output/tables/totals_corrected_sepcomb.csv")
 
 
 patient_outcomes_inc_master %>% 
@@ -62,7 +94,10 @@ patient_outcomes_inc_master %>%
   group_by(Virus, burden) %>% 
   summarise(n = sum(n, na.rm = T)) %>% 
   pivot_wider(id_cols = "Virus", names_from = "burden", values_from = "n") %>% 
-  transmute(Virus, `Recorded deaths (attributed)` = Hospital_deathRaw, `Inferred (30 days)` = Hospital_deathPlus30 - Hospital_deathRaw, `Deaths (incl inferred)` = Hospital_deathPlus30) %>% 
+  transmute(Virus, 
+            `Recorded deaths (attributed)` = Hospital_deathRaw, 
+            `Inferred (30 days)` = Hospital_deathPlus30 - Hospital_deathRaw, 
+            `Deaths (incl inferred)` = Hospital_deathPlus30) %>% 
   write_csv2(file = "output/tables/deaths_corrected.csv")
 
 

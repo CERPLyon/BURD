@@ -191,7 +191,7 @@ while(run){
   result_summary <- this_dataset %>% 
     group_by(patient_id) %>% 
     summarise(knownCommunity = as.numeric(any(testday < acute_day_limit & y == 1)), 
-              suspectedCommunity = (!knownCommunity) & as.numeric(any(testday >= acute_day_limit & testday < 7 & y == 1))) %>% 
+              suspectedCommunity = (!knownCommunity) & as.numeric(any(testday >= acute_day_limit & testday < suspected_day_limit & y == 1))) %>% 
     
     left_join(estStatus_piece) %>%
     # left_join(estStatus %>% filter(Virus == this_virus)) %>% 

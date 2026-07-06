@@ -6,8 +6,8 @@ library(Matrix)
 
 # load files
 print("loading files")
-load("data/data_NDA_reduced.RData")
-load("data/data_PCR_NDA.RData")
+load("data/data_NDA_reduced.RData", verbose = T)
+load("data/data_PCR_NDA.RData", verbose = T)
 
 #### specific virus
 # this_virus = "RSV"
@@ -62,8 +62,8 @@ for(virus_index in 1:9){
   
   # load rf trained model
   # load(file = paste0("rf/train_", output_stem, ".RData"), verbose = T)
-  load(file = paste0("ml/trainXG_", output_stem, ".RData"), verbose = T)
-  xgb.save(xg_out, fname = paste0("ml/trainXG_", output_stem, ".ubj"))
+  # load(file = paste0("ml/trainXG_", output_stem, ".RData"), verbose = T)
+  # xgb.save(xg_out, fname = paste0("ml/trainXG_", output_stem, ".ubj"))
   xg_out <- xgb.load(modelfile = paste0("ml/trainXG_", output_stem, ".ubj"))
   
   # predict for all NDAs
@@ -190,7 +190,7 @@ untested_IPP_prediction <- NDA_virus_prediction_sejour %>%
   dplyr::slice(1) %>% 
   select(IPP_sejour, Virus, NDA_pseudo, NDA_startDay, prediction) %>% 
   left_join(data_PCR_sejour_collapseSubtypes %>% 
-              filter(testday < 7) %>% 
+              filter(testday < suspected_day_limit) %>% 
               select(Virus, IPP_sejour) %>% 
               unique %>% 
               mutate(early_test = 1)) %>% 
