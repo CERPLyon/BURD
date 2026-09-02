@@ -112,4 +112,8 @@ deathRate_age_SNDS %>%
   # select(rank, everything()) %>% 
   write_csv2(file = "output/tables/deathRates.csv")
 
-
+# admission_incidence_age_CI_plot is created in b5.2_figures
+admission_incidence_age_CI_plot %>% 
+  pivot_wider(id_cols = Virus:burden, names_from = Adjustment, values_from = c("Inc1e5", "Lo", "Hi")) %>% 
+  select(Virus:burden, Inc1e5_Unadjusted, Inc1e5_Adjusted, Lo_Adjusted, Hi_Adjusted) %>% 
+  write_csv2("output/tables/admission_incidence_age_CI.csv")

@@ -8,6 +8,7 @@ virus_col[7:9] <- c("#F28E2BFF",
                     "#D64B00FF",
                     "#8E0152FF")
 
+
 # big bar plot for age
 
 patient_outcomes_inc_master %>% 
@@ -57,7 +58,7 @@ admission_incidence_age_CI_plot %>%
   theme_bw() + 
   guides(colour = "none") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) + 
-  labs(x = "Age group", y = "Incidence per 100 000 catchment population", fill = "")
+  labs(x = "Age group", y = "Incidence per 100 000 catchment population per year", fill = "")
 
 ggsave("output/plots/admission_incidence_age_CI.png", width = 30, height = 16, units = "cm", dpi = 600)
 
@@ -76,7 +77,7 @@ admission_incidence_age_CI_plot %>%
   theme_bw() + 
   guides(colour = "none") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) + 
-  labs(x = "Age group", y = "Incidence per 100 000 catchment population", fill = "")
+  labs(x = "Age group", y = "Incidence per 100 000 catchment population per year", fill = "")
 
 ggsave("output/plots/admission_incidence_age_CI_big6.png", width = 25, height = 16, units = "cm", dpi = 600)
 
@@ -96,7 +97,7 @@ admission_incidence_age_CI_plot %>%
   theme_bw() + 
   guides(colour = "none") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) + 
-  labs(x = "Age group", y = "Incidence per 100 000 catchment population", fill = "")
+  labs(x = "Age group", y = "Incidence per 100 000 catchment population per year", fill = "")
 
 ggsave("output/plots/admission_incidence_age_CI_small3.png", width = 15, height = 16, units = "cm", dpi = 600)
 
@@ -144,7 +145,7 @@ admission_incidence_season_CI_plot %>%
   theme_bw() + 
   guides(alpha = F) + 
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) + 
-  labs(x = "Season admitted", y = "Incidence per 100 000 catchment population") 
+  labs(x = "Season admitted", y = "Incidence per 100 000 catchment population per year") 
 
 
 ggsave("output/plots/admission_incidence_season_CI.png", width = 40, height = 13, units = "cm", dpi = 600)
@@ -165,7 +166,7 @@ admission_incidence_season_CI_plot %>%
   theme_bw() + 
   guides(alpha = F) + 
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) + 
-  labs(x = "Season admitted", y = "Incidence per 100 000 catchment population")
+  labs(x = "Season admitted", y = "Incidence per 100 000 catchment population per year")
 
 ggsave("output/plots/admission_incidence_season_CI_big6.png", width = 30, height = 13, units = "cm", dpi = 600)
 
@@ -184,7 +185,7 @@ admission_incidence_season_CI_plot %>%
   theme_bw() + 
   guides(alpha = F) + 
   theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.position = "none") + 
-  labs(x = "Season admitted", y = "Incidence per 100 000 catchment population")
+  labs(x = "Season admitted", y = "Incidence per 100 000 catchment population per year")
 
 ggsave("output/plots/admission_incidence_season_CI_small3.png", width = 15, height = 16, units = "cm", dpi = 600)
 
@@ -229,7 +230,7 @@ admission_incidence_month_CI_plot %>%
   theme_bw() + 
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) + 
   scale_x_date(date_breaks = "1 year", date_labels = "%Y") + 
-  labs(x = "Month admitted", y = "Incidence per 100 000 catchment population")
+  labs(x = "Month admitted", y = "Incidence per 100 000 catchment population per month")
 
 ggsave("output/plots/admission_incidence_month_CI.png", width = 30, height = 15, units = "cm", dpi = 600)
 
@@ -248,7 +249,7 @@ admission_incidence_month_CI_plot %>%
   theme_bw() + 
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) + 
   scale_x_date(date_breaks = "1 year", date_labels = "%Y") + 
-  labs(x = "Month admitted", y = "Incidence per 100 000 catchment population")
+  labs(x = "Month admitted", y = "Incidence per 100 000 catchment population per month")
 
 ggsave("output/plots/admission_incidence_month_CI_big3.png", width = 30, height = 15, units = "cm", dpi = 600)
 
@@ -267,9 +268,55 @@ admission_incidence_month_CI_plot %>%
   theme_bw() + 
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) + 
   scale_x_date(date_breaks = "1 year", date_labels = "%Y") + 
-  labs(x = "Month admitted", y = "Incidence per 100 000 catchment population")
+  labs(x = "Month admitted", y = "Incidence per 100 000 catchment population per month")
 
 ggsave("output/plots/admission_incidence_month_CI_others.png", width = 30, height = 15, units = "cm", dpi = 600)
+
+
+# testing rates plot for supplement
+
+rbind(
+  patient_outcomes_virus_correction %>% 
+    group_by(Virus, type_sej, season_admitted, age_group, test02) %>% 
+    summarise(n = n_distinct(IPP_sejour)) %>% 
+    ungroup %>% 
+    mutate(burden = ifelse(type_sej == "HOSPITALISATION", "Hospital_admission", "Emergency_only")) %>% 
+    select(-type_sej)
+  ,
+  patient_outcomes_virus_correction %>% 
+    filter(ICU == 1, type_sej == "HOSPITALISATION") %>% 
+    group_by(Virus, season_admitted, age_group, test02) %>% 
+    summarise(n = n_distinct(IPP_sejour)) %>% 
+    ungroup %>% 
+    mutate(burden = "Hospital_ICU") 
+  ,
+  patient_outcomes_virus_correction %>% 
+    filter(Death == 1, type_sej == "HOSPITALISATION") %>% 
+    group_by(Virus, season_admitted, age_group, test02) %>% 
+    summarise(n = n_distinct(IPP_sejour)) %>% 
+    ungroup %>% 
+    mutate(burden = "Hospital_death") 
+) %>% 
+  complete(Virus, burden, season_admitted, age_group, test02, fill = list(n = 0)) %>% 
+  mutate(n = if_else(Virus == "SARS-CoV-2" & season_admitted %in% c("16/17", "17/18", "18/19"), NA, n)) %>% 
+  pivot_wider(names_from = "test02", values_from = "n") %>% 
+  rename(Untested = "0", Tested = "1") %>% 
+  mutate(pTested = Tested/(Untested + Tested)) %>% 
+  mutate(burden = factor(burden, c("Emergency_only", "Hospital_admission", "Hospital_ICU", "Hospital_death"))) %>% 
+  mutate(burden = fct_relabel(burden, .fun = ~gsub("_", "\n", .x))) %>% 
+  ggplot(aes(x = season_admitted, y = pTested, colour = age_group, group = age_group)) + 
+  geom_line(linewidth = 1) + 
+  # geom_point() + 
+  facet_grid(burden ~ Virus) + 
+  theme_bw() + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) + 
+  scale_y_continuous(labels = scales::percent) + 
+  labs(x = "Season admitted", y = "Proportion of admissions tested", colour = "Age group") + 
+  scale_colour_viridis_d(option = "plasma")
+
+ggsave("output/plots/testingRates_season.png", width = 40, height = 13, units = "cm", dpi = 600)
+
+
 
 # ratio plots
 
@@ -608,9 +655,9 @@ patient_outcomes_inc_master %>%
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) + 
   scale_x_date(date_breaks = "1 year", date_labels = "%Y") + 
   scale_colour_manual(values = c(`FIRESP total` = "black")) + 
-  labs(x = "Month admitted", y = "Incidence per 100 000 catchment population", colour = "")
+  labs(x = "Month admitted", y = "Incidence per 100 000 catchment population per month", colour = "")
 
-ggsave("output/plots/area_vs_firesptotal.png", width = 25, height = 10, units = "cm", dpi = 600)
+ggsave("output/plots/area_vs_firesptotal.png", width = 25, height = 11, units = "cm", dpi = 600)
 
 
 

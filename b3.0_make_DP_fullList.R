@@ -11,12 +11,20 @@ DP_fullList <- #diag_sejour_long %>%
   select(code)
 
 DP_fullList %>% unlist %>% unname %>% sort %>% 
-  cat(sep = "\",\"", file = "data/SNDS/DP_fullList_Jul2026.txt")
+  cat(sep = "\",\"", file = "~/BURD/data/SNDS/DP_fullList_Jul2026.txt")
 
 DP_fullList %>% arrange(code) %>% 
-  write_csv("data/SNDS/DP_fullList_Dec2025.csv", col_names = F)
+  write_csv("~/BURD/data/SNDS/DP_fullList_Jul2026.csv", col_names = F)
 
 DP_fullList_3chr <- DP_fullList %>% mutate(code = substr(code, 1, 3)) %>% unique
+
+DP_fullList_3chr %>% unlist %>% unname %>% sort %>% unique %>% 
+  cat(sep = "\",\"", file = "~/BURD/data/SNDS/DP_fullList_3chr_Jul2026.txt")
+
+DP_fullList_3chr %>% arrange(code) %>% unique %>% 
+  write_csv("~/BURD/data/SNDS/DP_fullList_3chr_Jul2026.csv", col_names = F)
+
+
 DP_fullList_2chr <- DP_fullList %>% mutate(code = substr(code, 1, 2)) %>% unique
 
 

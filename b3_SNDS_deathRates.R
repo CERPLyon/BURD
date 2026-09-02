@@ -54,7 +54,8 @@ background_mortality <- mortality_ageGroup %>%
 # deaths_age_dp_raw <- read_csv2("~/Team CERP/Aby Ba/SNDS/HCL_FIRESP_AGG_extrac_21_04.csv")
 # deaths_age_dp_raw <- read_csv2("~/Team CERP/Aby Ba/SNDS/HCL_FIRESP_AGG_extrac_12_05.csv")
 # deaths_age_dp_raw <- read_csv2("~/Team CERP/Aby Ba/SNDS/HCL_FIRESP_AGG_extrac_19_05.csv")
-deaths_age_dp_raw <- read_csv2("data/SNDS/HCL_FIRESP_AGG_extrac_19_05.csv")
+deaths_age_dp_raw <- read_csv2("data/SNDS/HCL_FIRESP_AGG_extrac_19_05.csv") OLD
+deaths_age_dp_raw <- read_csv2("data/SNDS/HCL_FIRESP_AGG_extrac_09_07.csv") NEW
 
 deaths_age_SNDS <- deaths_age_dp_raw %>% 
   mutate(AGE_GROUP = case_when(AGE_GROUP == "00-01" ~ "0-1", 
@@ -102,7 +103,7 @@ dp_deaths_FIRESP <- data_sejours %>%
   transmute(age_group, IPP_alea , IPP_sejour , type_sej, DP, mode_sor, YearDischarged, DeathSejour) %>%
   # filter(IPP_alea == zz) %>%
   group_by(age_group
-           # , YearDischarged
+           , YearDischarged
            , type_sej
            , DP
   ) %>%
@@ -171,7 +172,7 @@ dp_deaths_joined %>%
   facet_wrap(.~age_group) +
   theme_bw() +
   scale_y_log10() + scale_x_log10() + 
-  labs(x = "FIRESP", y = "SNDS")
+  labs(x = "HCL cohort death rate", y = "SNDS HCL death rate")
 
 
 
