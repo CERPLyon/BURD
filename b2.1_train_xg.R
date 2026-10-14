@@ -14,6 +14,7 @@ source("xgb_ncv.R")
 # library(randomForest)
 
 print("getting control variables")
+# cmds = c(8, 100, "optimise", "auc", "execute", "uncertainty", "reg")
 cmds = commandArgs(trailingOnly = T)
 virus_index = as.numeric(cmds[1])
 nrounds = as.numeric(cmds[2])
@@ -21,6 +22,9 @@ optimise = (cmds[3] == "optimise")
 auc = (cmds[4] == "auc")
 execute = (cmds[5] == "execute")
 uncertainty = (cmds[6] == "uncertainty")
+sensAnal_flag = cmds[7] #reg, nospec, strict
+
+
 # virus_index = 9
 # nrounds = 5000
 # optimise = F
@@ -35,8 +39,25 @@ p_training = 0.7
 
 # load files
 print("loading files")
-load("data/data_NDA_reduced.RData", verbose = T)
-load("data/data_PCR_NDA.RData", verbose = T)
+
+if(sensAnal_flag == "reg"){
+  sensAnal = ""
+  load("data/data_NDA_reduced.RData", verbose = T)
+  load("data/data_PCR_NDA.RData", verbose = T)
+} else if (sensAnal_flag == "nospec"){
+  sensAnal = "_noSpecific"
+  load("data/data_NDA_reduced_noSpecific.RData", verbose = T)
+  data_NDA_reduced = data_NDA_reduced_noSpecific
+  load("data/data_PCR_NDA.RData", verbose = T)
+} else if (sensAnal_flag == "strict"){
+  sensAnal = "_strictNDA"
+  load("data/data_NDA_reduced_strictNDA.RData", verbose = T)
+  load("data/data_PCR_NDA_strictNDA.RData", verbose = T)
+  data_NDA_reduced = data_NDA_reduced_strictNDA
+  data_PCR_NDA = data_PCR_NDA_strictNDA
+} else {
+  stop("Invalid sensitivity analysis flag")
+}
 
 # print("removing biomarker columns with missing data")
 # # better to do this currently, otherwise the algorithm is presumably removing any lines with missing data
@@ -55,7 +76,8 @@ if(optimise){
   data_NDA_sparse_testResult_xgb.D <- xgb.DMatrix(data_NDA_sparse_testResult[, -1], 
                                                   label = data_NDA_sparse_testResult[, 1])
   
-  
+  remove(data_NDA_sparse_test)
+  remove(data_NDA_sparse_predictOnly)
   # Grid search for hyperparameter tuning
   search_grid <- expand.grid(
     max_depth = c(3, 5, 7), 
@@ -98,7 +120,7 @@ if(optimise){
       best_nrounds <- cv_results$early_stop$best_iteration
       
       print(c(best_auc, best_params, best_nrounds))
-      save(best_auc, best_params, best_nrounds, file = paste0("ml/optmiseXG_", output_stem, ".RData"))
+      save(best_auc, best_params, best_nrounds, file = paste0("ml", sensAnal, "/optmiseXG_", output_stem, ".RData"))
       
     }
   }
@@ -106,7 +128,7 @@ if(optimise){
 } 
 
 
-load(file = paste0("ml/optmiseXG_", output_stem, ".RData"))
+load(file = paste0("ml", sensAnal, "/optmiseXG_", output_stem, ".RData"))
 
 if(auc){
   ncv_out <- xgb.ncv_wrapper(x = data_NDA_sparse_testResult[, -1], 
@@ -119,7 +141,7 @@ if(auc){
   print(paste0("AUC: ", paste0(ncv_out$auc, collapse = "\n"), " - baseline: ", ncv_out$baseline))
   
   print("save cross-validation results")
-  save(ncv_out, file = paste0("ml/cvXG_", output_stem, ".RData"))
+  save(ncv_out, file = paste0("ml", sensAnal, "/cvXG_", output_stem, ".RData"))
 }
 
 if(execute){
@@ -141,8 +163,8 @@ if(execute){
   
   
   print("save training object")
-  save(xg_out, file = paste0("ml/trainXG_", output_stem, ".RData"))
-  xgb.save(xg_out, fname = paste0("ml/trainXG_", output_stem, ".ubj"))
+  save(xg_out, file = paste0("ml", sensAnal, "/trainXG_", output_stem, ".RData"))
+  xgb.save(xg_out, fname = paste0("ml", sensAnal, "/trainXG_", output_stem, ".ubj"))
   
 }
 
@@ -188,7 +210,7 @@ if(uncertainty){
     boot_NDA_virus_prediction %>% 
       group_by(NDA_pseudo, Virus) %>% 
       summarise(predictionLo = quantile(prediction, 0.025), predictionHi = quantile(prediction, 0.975)) %>% 
-      write_csv2(paste0("ml/bootPredictions_", output_stem, ".csv"))
+      write_csv2(paste0("ml", sensAnal, "/bootPredictions_", output_stem, ".csv"))
     
     # boot_NDA_virus_prediction %>% 
     #   pivot_wider(id_cols = c("NDA_pseudo", "Virus"), names_from = "boot", values_from = "prediction") %>% 

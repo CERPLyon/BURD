@@ -161,7 +161,9 @@ dp_deaths_joined %>%
                     y = 'deathRate_inHCL',
                     # facet.by = "type_sej",
                     color = 'grey50',
-                    cor.method = "spearman",
+                    # cor.method = "spearman",
+                    cor.method = "pearson",
+                    
                     cor.coef = TRUE,
                     conf.int = TRUE,
                     size = 0.5,

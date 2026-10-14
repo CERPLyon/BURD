@@ -406,8 +406,10 @@ ggsave("output/plots/ratio_month_CI.png", width = 30, height = 16, units = "cm",
 
 
 # proportion plot
+
 proportion_plot <- patient_outcomes_inc_master %>% 
-  filter(!(seasonAdmitted %in% c("20/21", "21/22"))) %>%
+  # filter(!(seasonAdmitted %in% c("20/21", "21/22"))) %>%
+  filter(!(seasonAdmitted %in% c("16/17", "17/18", "18/19", "19/20", "20/21", "21/22"))) %>%
   group_by(Virus, Adjustment, type_sej, burden, seasonAdmitted) %>% 
   summarise(n = sum(n)) %>% 
   left_join(catchmentPop %>% group_by(seasonAdmitted, type_sej) %>% summarise(catchmentHosp = sum(catchmentHosp)), by = c("seasonAdmitted", "type_sej")) %>% 
@@ -489,7 +491,8 @@ ggsave("output/plots/proportion_incidence_season.png", width = 25, height = 25, 
 
 
 proportion_plot_age <- patient_outcomes_inc_master %>% 
-  filter(!(seasonAdmitted %in% c("20/21", "21/22"))) %>%
+  # filter(!(seasonAdmitted %in% c("20/21", "21/22"))) %>%
+  filter(!(seasonAdmitted %in% c("16/17", "17/18", "18/19", "19/20", "20/21", "21/22"))) %>%
   group_by(Virus, Adjustment, type_sej, burden, age_group, seasonAdmitted) %>% 
   summarise(n = sum(n)) %>% 
   left_join(catchmentPop %>% group_by(age_group, seasonAdmitted, type_sej) %>% summarise(catchmentHosp = sum(catchmentHosp)), by = c("age_group", "seasonAdmitted", "type_sej")) %>% 

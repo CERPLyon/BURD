@@ -31,8 +31,8 @@ data_NDA_long <- diag_sejour_long %>%
                         monthname = lubridate::month(date_ent_sejour[1], label = T),
                         monthnum = lubridate::month(date_ent_sejour[1], label = F),
                         season_admitted = season_admitted[1],
-                        catego_UM = catego_UM[1]#,
-                        # catego_UM_agg = catego_UM_agg[1]
+                        catego_UM = catego_UM[1],
+                        catego_UM_agg = catego_UM_agg[1]
                         ),
             # left_join(.Last.value
             #             , 
@@ -57,7 +57,7 @@ data_NDA_long <- diag_sejour_long %>%
                 names_from = CIM10, values_from = type, values_fill = 0) %>% 
     rename_all(~gsub("^0$", "ZERO", .x))
 
-  
+
   
   data_NDA_wide_noBacteria <- data_NDA_wide_noBiomarkers %>% 
     left_join(summ_stats_wide 
@@ -75,10 +75,17 @@ data_NDA_long <- diag_sejour_long %>%
   
   col_info <- colSums(data_NDA_wide != 0, na.rm = T)
 
-  data_NDA_wide[, c("age_group", "monthname", "season_admitted", 
-                    col_info[(10:1000)] %>% sort(decreasing = T) %>% names)]
+  
+  data_NDA_wide
+  data_NDA_wide[, c("age_group", 
+                    "monthname",
+                    "monthnum", 
+                    "relativeWeek", 
+                    "season_admitted",
+                    "catego_UM", 
+                    col_info[(8:1000)] %>% sort(decreasing = T) %>% names)]
+  
 
-    
 data_NDA_reduced <- data_NDA_wide %>% 
   select(names(col_info[col_info > 100]))
 
@@ -94,9 +101,62 @@ save(data_PCR_NDA, file = "data/data_PCR_NDA.RData")
 save(data_NDA_reduced200, file = "data/data_NDA_reduced200.RData")
 save(data_NDA_reduced50, file = "data/data_NDA_reduced50.RData")
 
+remove(bact_BPOpresent_NDA)
+remove(bact_BPOpresent_NDA_wide)
+remove(data_NDA_wide_noBacteria)
+remove(data_NDA_wide_noBiomarkers)
+remove(data_NDA_wide)
+remove(data_NDA_reduced50)
+remove(data_NDA_reduced200)
+remove(data_NDA_reduced_noSpecific)
+remove(data_NDA_reduced_strictNDA)
+
+# HERE WE CAN DO SOME EXCLUSIONS FOR SENSITIVITY ANALYSIS
+# here we can remove those where the NDA starts several days into the visit
+if(T){
+  acute_day_limit = 3
+  
+  when_nda <- data_sejours %>% 
+    group_by(IPP_sejour, date_ent_sejour, NDA_pseudo) %>% 
+    summarise(date_ent = min(date_ent), date_sor = max(date_sor)) %>% 
+    mutate(nda_start_sinceAdmission = as.numeric(date_ent - date_ent_sejour), 
+           nda_end_sinceAdmission = as.numeric(date_sor - date_ent_sejour)) %>% 
+    ungroup
+  
+  data_NDA_reduced_strictNDA <- when_nda %>% 
+    filter(nda_start_sinceAdmission <= acute_day_limit) %>% 
+    select(IPP_sejour, NDA_pseudo) %>% 
+    left_join(data_NDA_reduced)
+  
+  
+  data_PCR_NDA_strictNDA <- when_nda %>% 
+    filter(nda_start_sinceAdmission <= acute_day_limit) %>% 
+    select(IPP_sejour, NDA_pseudo) %>% 
+    left_join(data_PCR_NDA)
+  
+  
+  save(data_NDA_reduced_strictNDA, file = "data/data_NDA_reduced_strictNDA.RData")
+  save(data_PCR_NDA_strictNDA, file = "data/data_PCR_NDA_strictNDA.RData")
+  
+}
+
+# here we can remove columns which specify organisms
+if(T){
+  organism_specific_icd10 <- read_csv2("data/Organism_ICD10_codes.csv") %>% 
+    filter(Kingdom == "Virus") %>% 
+    filter(!grepl("Bronch", Category)) %>% 
+    pull(cim10)
+  
+  data_NDA_reduced_noSpecific <- data_NDA_reduced[, !(names(data_NDA_reduced) %in% organism_specific_icd10)]
+  
+  save(data_NDA_reduced_noSpecific, file = "data/data_NDA_reduced_noSpecific.RData")
+  
+}
+
+
 ########## training stage #################
 
-# Run b2.3_train_xg.R for each virus
+# Run b2.1_train_xg.R for each virus
 # designed to be run on slurm
 # returns a trained model for each virus
 

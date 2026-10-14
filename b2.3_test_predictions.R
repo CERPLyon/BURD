@@ -6,8 +6,25 @@ library(Matrix)
 
 # load files
 print("loading files")
+
+sensAnal = ""
 load("data/data_NDA_reduced.RData", verbose = T)
 load("data/data_PCR_NDA.RData", verbose = T)
+
+if(F){
+  sensAnal = "_noSpecific"
+  load("data/data_NDA_reduced_noSpecific.RData", verbose = T)
+  data_NDA_reduced = data_NDA_reduced_strictNDA
+}
+
+
+if(F){
+  sensAnal = "_strictNDA"
+  load("data/data_NDA_reduced_strictNDA.RData", verbose = T)
+  load("data/data_PCR_NDA_strictNDA.RData", verbose = T)
+  data_NDA_reduced = data_NDA_reduced_strictNDA
+  data_PCR_NDA = data_PCR_NDA_strictNDA
+}
 
 #### specific virus
 # this_virus = "RSV"
@@ -32,9 +49,9 @@ for(virus_index in 1:9){
   # source("BURD2.2_prep_rf.R") #this ensures that the data prep is the same as in the actual training script
   source("b2.2_prep_xg.R") #this ensures that the data prep is the same as in the actual training script
   
-  load(file = paste0("ml/cvXG_", output_stem, ".RData"), verbose = T)
+  load(file = paste0("ml", sensAnal, "/cvXG_", output_stem, ".RData"), verbose = T)
   
-  prediction_LoHi <- read_csv2(paste0("ml/bootPredictions_", output_stem, ".csv")) 
+  prediction_LoHi <- read_csv2(paste0("ml", sensAnal, "/bootPredictions_", output_stem, ".csv")) 
   if((prediction_LoHi %>% 
     filter(is.na(predictionHi) | is.na(predictionLo)) %>% 
     nrow) > 0) stop()
@@ -64,7 +81,7 @@ for(virus_index in 1:9){
   # load(file = paste0("rf/train_", output_stem, ".RData"), verbose = T)
   # load(file = paste0("ml/trainXG_", output_stem, ".RData"), verbose = T)
   # xgb.save(xg_out, fname = paste0("ml/trainXG_", output_stem, ".ubj"))
-  xg_out <- xgb.load(modelfile = paste0("ml/trainXG_", output_stem, ".ubj"))
+  xg_out <- xgb.load(modelfile = paste0("ml", sensAnal, "/trainXG_", output_stem, ".ubj"))
   
   # predict for all NDAs
   # prediction_allNDA <- predict(rf_out, newdata = data_NDA_thisVirus, type = "prob")[, "1"]
@@ -84,7 +101,7 @@ for(virus_index in 1:9){
     NDA_virus_prediction = rbind(NDA_virus_prediction, NDA_virus_prediction_piece)
   }
   
-  NDA_virus_prediction %>% write_csv("output/NDA_virus_prediction.csv")
+  NDA_virus_prediction %>% write_csv(paste0("output/NDA_virus_prediction", sensAnal, ".csv"))
   
   if(F){
     
@@ -107,7 +124,7 @@ for(virus_index in 1:9){
       theme_bw() + 
       labs(fill = "Test result", x = "Predicted test result", title = "Training dataset")
 
-    ggsave(paste0("diag/predict_", output_stem, "_trainset.png"))
+    ggsave(paste0("diag", sensAnal, "/predict_", output_stem, "_trainset.png"))
     
     prediction_test <- predict(xg_out, newdata = data_NDA_sparse_test[, -1], type = "response")
     
@@ -117,7 +134,7 @@ for(virus_index in 1:9){
       theme_bw()+ 
       labs(fill = "Test result", x = "Predicted test result", title = "Testing dataset")
     
-    ggsave(paste0("diag/predict_", output_stem, "_testset.png"))
+    ggsave(paste0("diag", sensAnal, "/predict_", output_stem, "_testset.png"))
     
     
     # data_NDA_thisVirus_predictOnly %>% 
@@ -146,14 +163,14 @@ for(virus_index in 1:9){
       theme_bw()+ 
       labs(x = "Predicted test result", title = "Untested dataset")
     
-    ggsave(paste0("diag/predict_", output_stem, "_unknownset.png"))
+    ggsave(paste0("diag", sensAnal, "/predict_", output_stem, "_unknownset.png"))
     
     
     tibble(train = prediction_train %>% mean(na.rm = T), 
            test = prediction_test %>% mean(na.rm = T), 
            unknown = prediction_unknown %>%  mean(na.rm = T),
            true = data_NDA_thisVirus$TestPos %>% mean(na.rm = T)) %>% 
-      write_csv(paste0("diag/predictStats_", output_stem, ".csv"))
+      write_csv(paste0("diag", sensAnal, "/predictStats_", output_stem, ".csv"))
     
     
     # data_NDA_thisVirus_predictOnly %>% 
@@ -165,7 +182,7 @@ for(virus_index in 1:9){
   
 }
 
-NDA_virus_prediction <- read_csv("output/NDA_virus_prediction.csv")
+NDA_virus_prediction <- read_csv(paste0("output/NDA_virus_prediction", sensAnal, ".csv"))
 
 
 
@@ -179,7 +196,7 @@ NDA_virus_prediction_sejour = data_sejours %>%
   left_join(NDA_virus_prediction, relationship = "one-to-many")
 
 
-NDA_virus_prediction_sejour %>% write_csv("output/NDA_virus_prediction_sejour.csv")
+NDA_virus_prediction_sejour %>% write_csv(paste0("output/NDA_virus_prediction_sejour", sensAnal, ".csv"))
 
 ## plot for display
 
@@ -214,7 +231,7 @@ data_PCR_NDA %>%
   labs(x = "Predicted probability of positive test", fill = "True test result") + 
   theme_bw()
 
-ggsave("output/plots/xg_prediction.png", width = 20, height = 12, units = "cm", dpi = 600)
+ggsave(paste0("output/plots/xg_prediction", sensAnal, ".png"), width = 20, height = 12, units = "cm", dpi = 600)
 
 
 
@@ -236,7 +253,7 @@ for(virus_index in 1:9){
   # load rf trained model
   # load(file = paste0("rf/train_", output_stem, ".RData"), verbose = T)
   # load(file = paste0("ml/trainXG_", output_stem, ".RData"), verbose = T)
-  xg_out <- xgb.load(modelfile = paste0("ml/trainXG_", output_stem, ".ubj"))
+  xg_out <- xgb.load(modelfile = paste0("ml", sensAnal, "/trainXG_", output_stem, ".ubj"))
   
   dt_piece = xgb.importance(model = xg_out)
   dt_piece[, Virus := this_virus][, rank := 1:nrow(dt_piece)]
@@ -288,5 +305,5 @@ dt[, .(ifelse(Virus == shift(Virus, 1, fill = "NA"), "", Virus),
          Description = ifelse(Variable == "PO2_mean", "pO2 - mean", Description), 
          Description = ifelse(Variable == "CREA_min", "Creatinine - minimum", Description)) %>% 
   mutate(Contribution = format(round(Contribution, 3), nsmall = 3)) %>% 
-  fwrite("output/tables/xg_importance.csv", sep = ";")
+  fwrite(paste0("output/tables/xg_importance", sensAnal, ".csv"), sep = ";")
 

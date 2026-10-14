@@ -27,7 +27,7 @@ testday_table <- testday_bardata %>%
   summarise(n = sum(n)) %>% 
   group_by(Virus) %>% 
   mutate(p = n/sum(n)) %>% 
-  mutate(Patients = paste0(n, " (", round(p*100, 1), "%)")) %>% 
+  mutate(Patients = paste0(format(n, big.mark = " "), " (", round(p*100, 1), "%)")) %>% 
   select(-n, -p) %>% 
   mutate(TestStatus = factor(TestStatus, c("Test before day 3", "Test on day 3-6", "Test after day 6", "No test performed"))) %>% 
   arrange(Virus, TestStatus)
@@ -50,13 +50,14 @@ testday_bardata %>%
                    table.theme = gridExtra::ttheme_default(
                      core = list(
                        core.just = "right",
-                       fg_params = list(cex = 0.5, lineheight = 0.6, col = "black"),  # shrink body rows
+                       fg_params = list(cex = 0.55, lineheight = 0.6, col = "black"),  # shrink body rows
                      bg_params = list(fill = "white", col = "darkgrey")
                        )
                    )) +
   theme_bw() + 
   labs(x = "Days after admission", fill = "Test result", y = "Patients") + 
   scale_x_continuous(breaks = 0:6 + 0.5, labels = 0:6) + 
+  scale_y_continuous(labels=function(x) format(x, big.mark = " ", scientific = FALSE)) + 
   scale_fill_manual(values = c(NEGATIVE = "skyblue3", POSITIVE = "red")) + 
   facet_wrap(.~Virus, scale = "free_y")
 
@@ -76,13 +77,14 @@ testday_bardata %>%
                    table.theme = gridExtra::ttheme_default(
                      core = list(
                        core.just = "right",
-                       fg_params = list(cex = 0.5, lineheight = 0.6, col = "black"),  # shrink body rows
+                       fg_params = list(cex = 0.55, lineheight = 0.6, col = "black"),  # shrink body rows
                        bg_params = list(fill = "white", col = "darkgrey")
                      )
                    )) +
   theme_bw() + 
   labs(x = "Days after admission", fill = "Test result", y = "Patients") + 
   scale_x_continuous(breaks = 0:6 + 0.5, labels = 0:6) + 
+  scale_y_continuous(labels=function(x) format(x, big.mark = " ", scientific = FALSE)) + 
   scale_fill_manual(values = c(NEGATIVE = "skyblue3", POSITIVE = "red")) + 
   facet_wrap(.~Virus, scale = "free_y")
 
@@ -98,16 +100,18 @@ testday_bardata %>%
                    , aes(x = x, y = y, label = tbs[7:9]),
                    inherit.aes = FALSE,
                    table.colnames = F, table.hjust = 1,
+                   # fontsize.scaling = 0.5, 
                    table.theme = gridExtra::ttheme_default(
                      core = list(
                        core.just = "right",
-                       fg_params = list(cex = 0.5, lineheight = 0.6, col = "black"),  # shrink body rows
+                       fg_params = list(cex = 0.55, lineheight = 0.6, col = "black"),  # shrink body rows
                        bg_params = list(fill = "white", col = "darkgrey")
                      )
                    )) +
   theme_bw() + 
   labs(x = "Days after admission", fill = "Test result", y = "Patients") + 
   scale_x_continuous(breaks = 0:6 + 0.5, labels = 0:6) + 
+  scale_y_continuous(labels=function(x) format(x, big.mark = " ", scientific = FALSE)) + 
   scale_fill_manual(values = c(NEGATIVE = "skyblue3", POSITIVE = "red")) + 
   facet_wrap(.~Virus, scale = "free_y")
 

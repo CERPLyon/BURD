@@ -74,21 +74,22 @@ summ_stats <- rbind(as.data.table(biochimie), as.data.table(hematologie))[, .(n_
                                                                           .(NDA_pseudo, IPP_sejour, analysis)] %>% 
   as_tibble
 
-biochimie_testday <- biochimie %>% 
-  left_join(data_sejours %>% select(IPP_sejour, date_ent_sejour) %>% unique) %>% 
-  mutate(marker_testday = as.numeric(date_preleve - date_ent_sejour))
 
-hematologie_testday <- hematologie %>% 
-  left_join(data_sejours %>% select(IPP_sejour, date_ent_sejour) %>% unique) %>% 
-  mutate(marker_testday = as.numeric(date_preleve - date_ent_sejour))
-
-summ_stats_02 <- rbind(as.data.table(biochimie_testday), as.data.table(hematologie_testday))[marker_testday <= 2, .(n_obs = .N, 
-                                                                              max_obs = max(result_with_limits), 
-                                                                              min_obs = min(result_with_limits), 
-                                                                              median_obs = median(result_with_limits), 
-                                                                              mean_obs = mean(result_with_limits)), 
-                                                                          .(NDA_pseudo, IPP_sejour, analysis)] %>% 
-  as_tibble
+# biochimie_testday <- biochimie %>% 
+#   left_join(data_sejours %>% select(IPP_sejour, date_ent_sejour) %>% unique) %>% 
+#   mutate(marker_testday = as.numeric(date_preleve - date_ent_sejour))
+# 
+# hematologie_testday <- hematologie %>% 
+#   left_join(data_sejours %>% select(IPP_sejour, date_ent_sejour) %>% unique) %>% 
+#   mutate(marker_testday = as.numeric(date_preleve - date_ent_sejour))
+# 
+# summ_stats_02 <- rbind(as.data.table(biochimie_testday), as.data.table(hematologie_testday))[marker_testday <= 2, .(n_obs = .N, 
+#                                                                               max_obs = max(result_with_limits), 
+#                                                                               min_obs = min(result_with_limits), 
+#                                                                               median_obs = median(result_with_limits), 
+#                                                                               mean_obs = mean(result_with_limits)), 
+#                                                                           .(NDA_pseudo, IPP_sejour, analysis)] %>% 
+#   as_tibble
 
 
 # summ_stats <- rbind(biochimie, hematologie) %>% 
@@ -96,7 +97,7 @@ summ_stats_02 <- rbind(as.data.table(biochimie_testday), as.data.table(hematolog
 #   summarise(n_obs = n(), max_obs = max(result_with_limits), min_obs = min(result_with_limits), median_obs = median(result_with_limits), mean_obs = mean(result_with_limits))
 
 summ_stats_wide <- summ_stats %>%
-  # summ_stats_02_wide <- summ_stats_02 %>%   
+  # summ_stats_02_wide <- summ_stats_02 %>%
   rename_all(~gsub("_obs", "", .x)) %>% 
   pivot_wider(id_cols = c("NDA_pseudo", "IPP_sejour"), names_from = analysis, names_glue = "{analysis}_{.value}",
               values_from = c("n", "max", "min", "mean", "median")) %>% 
@@ -109,9 +110,17 @@ summ_stats_wide <- summ_stats %>%
 summ_stats_wide %>% 
   write_csv("data/biomarkers_summ_stat.csv")
 
-summ_stats_02_wide %>% 
-  write_csv("data/biomarkers_summ_stat_02.csv")
 
+remove(biochimie)
+remove(hematologie)
+remove(summ_stats)
+remove(diag_sejour_long_beforeExclusions)
+
+sort( sapply(ls(),function(x){object.size(get(x))})) 
+# summ_stats_02_wide %>% 
+#   write_csv("data/biomarkers_summ_stat_02.csv")
+
+# save.image()
 
 # calc_loglik_wrapper <- function(fit_pars, unfit_pars, this_dataset, return_loglik = F, return_pinfected = F){
 #   # pars["dailClr"]
