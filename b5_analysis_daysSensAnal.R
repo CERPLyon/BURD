@@ -224,30 +224,5 @@ patient_outcomes_inc_master_days <- patient_outcomes_virus_correction_days %>%
          burden = factor(burden, levels = c("Emergency_only", "Hospital_admission", "Hospital_ICU", "Hospital_deathRaw", "Hospital_deathControl", "Hospital_deathPlus30")))
 
 
-patient_outcomes_inc_master_days %>% 
-  filter(!is.na(acute_day_limit)) %>% 
-  filter(burden == "Hospital_admission") %>%
-  filter(!seasonAdmitted %in% c("20/21", "21/22")) %>% 
-  group_by(acute_day_limit, suspected_day_limit, Virus, Adjustment) %>% 
-  summarise(n = sum(n, na.rm = T)) %>% 
-  pivot_wider(id_cols = c("acute_day_limit", "suspected_day_limit", "Virus"), names_from = "Adjustment", values_from = "n") %>% 
-  transmute(acute_day_limit, suspected_day_limit, 
-            Virus, 
-            # Confirmed = knownCommunityRaw, 
-            Confirmed = knownCommunity, 
-            Suspected = probableCommunity,
-            `Inferred (late)`  = paste0(round(withLate - knownCommunity, 1), " (", round(withLateLo - knownCommunity, 1), ", ", round(withLateHi - knownCommunity, 1), ")"), 
-            # `Inferred (untested)`  = paste0(round(withLateUntested - knownCommunity, 1), " (", round(withLateUntestedLo - knownCommunity, 1), ",", round(withLateUntestedHi - knownCommunity, 1), ")"), 
-            `Inferred (untested)`  = paste0(round(withLateUntested - withLate, 1), " (", round(withLateUntestedLo - withLateLo, 1), ", ", round(withLateUntestedHi - withLateHi, 1), ")"), 
-            `Inferred (total)`  = paste0(round(withLateUntested, 1), " (", round(withLateUntestedLo, 1), ", ", round(withLateUntestedHi, 1), ")"), 
-            # n_corrected = n_afterCorrection - n_knownCommunity, 
-            `Total (after adjustment)`  = paste0(round(afterCorrection, 1), " (", round(afterCorrectionLo, 1), ", ", round(afterCorrectionHi, 1), ")"), 
-            
-            Ratio = paste0(round((afterCorrection)/knownCommunity, 2), 
-                           " (", round((afterCorrectionLo)/knownCommunity, 2), 
-                           ", ", round((afterCorrectionHi)/knownCommunity, 2), ")")
-  ) %>% 
-  mutate(Virus = factor(Virus, virus_vec)) %>% 
-  arrange(Virus, suspected_day_limit, acute_day_limit) %>%
-  write_csv2(file = "output/tables/totals_corrected_days.csv")
+
 

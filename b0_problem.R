@@ -3,7 +3,8 @@ testday_bardata <- data_PCR_sejour_collapseSubtypes %>%
   filter(resultatbis %in% c("POSITIVE", "NEGATIVE")) %>% 
   arrange(testday, resultatbis) %>% 
   group_by(Virus, IPP_sejour) %>% 
-  summarise(first_testday = testday[1],
+  summarise(#season_admitted = season_admitted[1],
+              first_testday = testday[1],
             result = resultatbis[1]) %>% 
   # mutate(result = fct_rev(result)) %>%
   # mutate(Virus = fct_recode(Virus, `RV/EV` = "RVEV")) %>%
@@ -16,7 +17,9 @@ testday_bardata <- data_PCR_sejour_collapseSubtypes %>%
   # summarise(n = n()) %>% 
 
 testday_table <- testday_bardata %>% 
-  group_by(Virus, first_testday) %>%
+  group_by(Virus, first_testday
+           # , season_admitted
+           ) %>%
   summarise(n = n()) %>% 
   mutate(TestStatus = case_when(first_testday < 3 ~ "Test before day 3", 
                                 first_testday < 7 ~ "Test on day 3-6", 

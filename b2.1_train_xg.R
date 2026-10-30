@@ -128,7 +128,7 @@ if(optimise){
 } 
 
 
-load(file = paste0("ml", sensAnal, "/optmiseXG_", output_stem, ".RData"))
+load(file = paste0("ml", sensAnal, "/optmiseXG_", output_stem, ".RData"), verbose = T)
 
 if(auc){
   ncv_out <- xgb.ncv_wrapper(x = data_NDA_sparse_testResult[, -1], 

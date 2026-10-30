@@ -114,7 +114,6 @@ dp_deaths_FIRESP <- data_sejours %>%
 
 
 
-
 inclusion_string <- paste0(c(
   paste0(gsub("[.]", "", inclusion_code$code), "_"), 
   na.omit(inclusion_code$code_group)), 

@@ -14,6 +14,7 @@ if(local){
 }
 
 load("data/data_latent.RData", verbose = T)
+source("b1.1.1_latent_functions.R")
 
 decay_iterations = 20000
 prevalence_iterations = 1000

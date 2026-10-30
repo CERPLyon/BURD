@@ -1,4 +1,7 @@
 library(data.table)
+big_day_limit = 28
+
+source("b1.1.1_latent_functions.R")
 
 fits = NULL
 # this_virus = "InfluenzaA"

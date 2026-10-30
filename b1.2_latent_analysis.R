@@ -20,7 +20,11 @@ lowerbound_prev_table <- this_dataset %>%
 start_par = c(sensAdm = 1, dailClr = 0.05, falsPos = 0)
 
 print("begin MCMC")
-mcmc_res <- modMCMC(niter = decay_iterations, updatecov = 100, verbose = 100, 
+mcmc_res <- modMCMC(#
+                    # niter = decay_iterations, 
+                    niter = 1000,
+    
+                    updatecov = 100, verbose = 100, 
                     f = calc_loglik_wrapper_age, 
                     prior = prior_function,
                     FUN = calculate_remaining_sensitivity, 

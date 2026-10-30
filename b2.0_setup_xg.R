@@ -147,6 +147,8 @@ if(T){
     filter(!grepl("Bronch", Category)) %>% 
     pull(cim10)
   
+  organism_specific_icd10 %>% cat(sep = ", ")
+  
   data_NDA_reduced_noSpecific <- data_NDA_reduced[, !(names(data_NDA_reduced) %in% organism_specific_icd10)]
   
   save(data_NDA_reduced_noSpecific, file = "data/data_NDA_reduced_noSpecific.RData")

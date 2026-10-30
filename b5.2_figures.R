@@ -304,6 +304,7 @@ rbind(
   mutate(pTested = Tested/(Untested + Tested)) %>% 
   mutate(burden = factor(burden, c("Emergency_only", "Hospital_admission", "Hospital_ICU", "Hospital_death"))) %>% 
   mutate(burden = fct_relabel(burden, .fun = ~gsub("_", "\n", .x))) %>% 
+  # filter(burden == "Hospital\nadmission", Virus == "RSV") %>% View #MANUSCRIPT TEXT VALUES #run this line to get values for the text
   ggplot(aes(x = season_admitted, y = pTested, colour = age_group, group = age_group)) + 
   geom_line(linewidth = 1) + 
   # geom_point() + 
@@ -429,9 +430,10 @@ proportion_plot %>%
   group_by(burden, Adjustment) %>% 
   mutate(p = Inc1e5/sum(Inc1e5, na.rm = T)) %>% 
   select(Adjustment, burden, Virus, p) %>% 
-  mutate(p = (p*100) %>% round(1) %>% format(nsmall = 1) %>% {ifelse(. == "  NaN", "", .)} %>% paste0("%")) %>% 
-  pivot_wider(id_cols = c("burden", "Virus"), names_from = "Adjustment", values_from = "p") %>% 
   arrange(burden) %>% 
+  pivot_wider(id_cols = c("burden", "Virus"), names_from = "Adjustment", values_from = "p") %>% 
+  # mutate(z = ifelse(Adjusted > Unadjusted, "BIGGER", "smaller")) %>% View #MANUSCRIPT TEXT VALUES #run this line to get values for the text
+  mutate(across(ends_with("djusted"), function(.x) format_fix(.x*100, 1) %>% {ifelse(. == "  NaN", "", .)} %>% paste0("%"))) %>% 
   write_csv2("output/tables/proportion_incidence.csv")
   
 proportion_plot %>% 

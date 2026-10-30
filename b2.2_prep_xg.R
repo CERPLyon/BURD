@@ -42,7 +42,7 @@ data_NDA_sparse <- as(data_NDA_thisVirus %>%
                                ) %>%
                         as.matrix,
                       "dgCMatrix")
-remove(data_NDA_thisVirus)
+
 
 print(c("rows data_NDA_sparse", nrow(data_NDA_sparse)))
 

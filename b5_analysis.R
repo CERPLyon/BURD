@@ -1,5 +1,5 @@
 library(tidyverse)
-source("b0.R")
+# source("b0.R")
 
 
 deathRate_age_SNDS <- read_csv2(file = paste0("output/deathRate_age_SNDS.csv"))

@@ -1,4 +1,9 @@
 library(data.table)
+acute_day_limit = 3 #threshold to define a known community infection
+suspected_day_limit = 7 #threshold for a suspected community infection
+big_day_limit = 28 #number of days since admission for estimating the model
+
+source("b1.1.1_latent_functions.R")
 
 fits = NULL
 # this_virus = "InfluenzaA"
@@ -117,14 +122,24 @@ fits %>% write_csv2(file = paste0("output/tables/fits_age.csv"))
 estStatus %>% write_csv2(file = paste0("output/estStatus_age.csv"))
 validParams %>% write_csv2(file = paste0("output/validParams_age.csv"))
 
+fits <- read_csv2(file = paste0("output/tables/fits_age.csv"))
+estStatus <- read_csv2(file = paste0("output/estStatus_age.csv"))
+validParams <- read_csv2(file = paste0("output/validParams_age.csv"))
+
+
+format_fix_sci <- function(val, dig){
+  ifelse(val < 10^(-dig), signif(val, dig), format(nsmall = dig, round(digits = dig, val)))
+  
+}
+
 fits %>% 
   select(-(confirmed:inferredSuspected)) %>% 
   {rename_with(., .fn = ~paste0(.x, "_best"), .cols = select(., 2:10) %>% names)} %>% 
   pivot_longer(-Virus, names_sep = "_", names_to = c("Parameter", ".value")) %>% 
-  mutate(cell = paste0(signif(best, digits = 3), "\n(", signif(min, 3), ",", signif(max, 3), ")")) %>% 
+  mutate(cell = paste0(format_fix_sci(best, 3), "\n(", format_fix_sci(min, 3), ",", format_fix_sci(max, 3), ")")) %>% 
   select(-best, -min, -max) %>% 
   pivot_wider(id_cols = "Virus", names_from = "Parameter", values_from = "cell") %>% 
-  rename_all(~gsub("prev", "Prevalence\n", .x)) %>% 
+  rename_all(~gsub("prev", "Prevalence\n", .x)) %>%
   write_csv2(file = paste0("output/tables/fits_age_CI.csv"))
 
 
