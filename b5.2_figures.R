@@ -1,17 +1,24 @@
+
+
 virus_col = viridisLite::turbo(length(virus_vec)) %>%
-  setNames(virus_vec)
+  setNames(virus_vec) %>% 
+  head(8)
 
 adjustment_col = c(Unadjusted = "#1a80bb", Adjusted = "#ea801c")
 
 
-virus_col[7:9] <- c("#F28E2BFF",
+# virus_col[7:9] <- c("#F28E2BFF",
+#                     "#D64B00FF",
+#                     "#8E0152FF")
+virus_col[7:8] <- c(#"#F28E2BFF",
                     "#D64B00FF",
                     "#8E0152FF")
-
+patient_outcomes_inc_master <- patient_outcomes_noCoDet_inc_master
 
 # big bar plot for age
 
 patient_outcomes_inc_master %>% 
+  filter(Virus != "hCoV") %>% 
   filter(burden == "Hospital_admission") %>% 
   filter(Adjustment %in% c("knownCommunity", "probableCommunity", "withLate")) %>% 
   ggplot(aes(x = monthAdmitted, y = n, colour = Adjustment)) + 
@@ -21,20 +28,24 @@ patient_outcomes_inc_master %>%
 
 ggsave("output/plots/nos_results.png", units = "cm", width = 35, height = 20)
 
-patient_outcomes_inc_master %>% 
+admission_incidence_age_CI_plot <-
+  patient_outcomes_inc_master %>% 
   filter(!(seasonAdmitted %in% c("20/21", "21/22"))) %>% 
+  filter(Virus != "hCoV") %>% 
   group_by(Virus, age_group, Adjustment, type_sej, burden, seasonAdmitted) %>% 
   summarise(n = sum(n)) %>% 
   left_join(catchmentPop, by = c("seasonAdmitted", "age_group", "type_sej")) %>% 
   mutate(Inc1e5 = n/catchmentHosp*1e5) %>% 
   group_by(Virus, age_group, Adjustment, type_sej, burden) %>% 
-  summarise(Inc1e5 = mean(Inc1e5, na.rm = T)) %>% 
+  summarise(Inc1e5 = mean(Inc1e5, na.rm = T), n = sum(n, na.rm = T)) %>% 
   filter(Adjustment %in% c("knownCommunity", "afterCorrection", "afterCorrectionLo", "afterCorrectionHi")) %>% 
   ungroup %>% 
+  group_by(Virus, age_group, type_sej, burden) %>% 
+  mutate(n_knownCommunity = n[Adjustment == "knownCommunity"]) %>% 
   mutate(CI = gsub("afterCorrection", "", gsub("knownCommunity", "", Adjustment)), 
          Adjustment = gsub("[LoHi]{2}$", "", Adjustment), 
          CI = ifelse(CI == "", "Inc1e5", CI)) %>% 
-  pivot_wider(id_cols = c("Virus", "age_group", "type_sej", "burden", "Adjustment"), names_from = "CI", values_from = "Inc1e5") %>% 
+  pivot_wider(id_cols = c("Virus", "age_group", "type_sej", "burden", "Adjustment", "n_knownCommunity"), names_from = "CI", values_from = "Inc1e5") %>% 
   mutate(Adjustment = fct_recode(Adjustment, Unadjusted = "knownCommunity", Adjusted = "afterCorrection")) %>% 
   mutate(Adjustment = fct_rev(Adjustment)) %>% 
   filter((burden %in% c("Emergency_only", "Hospital_admission", "Hospital_ICU")) | #this applies the 30 day death correction only to the adjusted numbers
@@ -42,75 +53,71 @@ patient_outcomes_inc_master %>%
            (burden == "Hospital_deathPlus30" & Adjustment == "Adjusted")) %>% 
   mutate(burden = fct_collapse(burden, Hospital_death = c("Hospital_deathRaw", "Hospital_deathPlus30"))) %>% 
   
-  mutate(burden = fct_relabel(burden, .fun = ~gsub("_", "\n", .x))) -> admission_incidence_age_CI_plot
+  mutate(burden = fct_relabel(burden, .fun = ~gsub("_", "\n", .x)))
+
+# admission_incidence_age_CI_plot %>% 
+#   # filter((burden %in% c("Emergency_only", "Hospital_admission"))) %>%
+#   # filter(type_sej == "HOSPITALISATION") %>%
+#   filter(Virus %in% virus_vec[1:4]) %>% 
+#   ggplot(aes(x = age_group, y = Inc1e5, colour = Adjustment, fill = Adjustment)) + 
+#   geom_bar(stat = "identity", position = "dodge", alpha = 0.5) + 
+#   geom_errorbar(aes(ymin = Lo, ymax = Hi, colour = Adjustment), width = 0.2, position = position_nudge(x = 0.25)) +
+#   facet_grid(burden~Virus
+#              , scales = "free_y"
+#   ) + 
+#   scale_colour_manual(values = adjustment_col) +
+#   scale_fill_manual(values = adjustment_col) +
+#   theme_bw() + 
+#   guides(colour = "none") +
+#   theme(axis.text.x = element_text(angle = 45, hjust = 1)) + 
+#   labs(x = "Age group", y = "Incidence per 100 000 catchment population per year", fill = "")
 
 admission_incidence_age_CI_plot %>% 
-  # filter((burden %in% c("Emergency_only", "Hospital_admission"))) %>%
-  # filter(type_sej == "HOSPITALISATION") %>%
-  ggplot(aes(x = age_group, y = Inc1e5, colour = Adjustment, fill = Adjustment)) + 
-  geom_bar(stat = "identity", position = "dodge", alpha = 0.5) + 
-  geom_errorbar(aes(ymin = Lo, ymax = Hi, colour = Adjustment), width = 0.2, position = position_nudge(x = 0.25)) +
+  # filter(Virus %in% virus_vec[1:8]) %>%
+  # filter(Virus %in% virus_vec[1:4]) %>%
+  filter(Virus %in% virus_vec[5:8]) %>%
+  # mutate(across(Inc1e5:Hi, ~ifelse(.x < 0.001 , NA, .x))) %>% 
+  mutate(across(Inc1e5:Hi, ~ifelse(n_knownCommunity == 0 & Adjustment == "Unadjusted" , NA, .x))) %>%
+  # mutate(across(Inc1e5:Hi, ~ifelse(n_knownCommunity < 0.01, NA, .x))) %>%
+  ggplot(aes(x = age_group, y = Inc1e5, colour = Adjustment, fill = Adjustment, group = Adjustment)) +
+  
+  geom_ribbon(aes(ymin = Lo, ymax = Hi), colour = NA, alpha = 0.5) +
+  geom_line() +
+  geom_point(aes(size = Adjustment)) + 
+  
+  # geom_bar(stat = "identity", position = "dodge", alpha = 0.5) + 
+  # geom_errorbar(aes(ymin = Lo, ymax = Hi, colour = Adjustment), width = 0.2, position = position_nudge(x = 0.25)) +
   facet_grid(burden~Virus
-             , scales = "free_y"
+             # , scales = "free_y"
   ) + 
+  scale_y_log10(breaks = scales::breaks_log(6), minor_breaks=scales::minor_breaks_n(3), labels = scales::label_comma()) +
   scale_colour_manual(values = adjustment_col) +
-  scale_fill_manual(values = adjustment_col) +
+  scale_size_manual(values = c(Unadjusted = 1, Adjusted = 0)) + 
+  scale_fill_manual(values = adjustment_col, guide = "none") +
   theme_bw() + 
-  guides(colour = "none") +
+  guides(size = "none") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) + 
-  labs(x = "Age group", y = "Incidence per 100 000 catchment population per year", fill = "")
+  labs(x = "Age group", y = "Incidence per 100 000 catchment population per year", fill = "") + 
+  coord_cartesian(ylim = c(0.01, NA))
 
 ggsave("output/plots/admission_incidence_age_CI.png", width = 30, height = 16, units = "cm", dpi = 600)
-
-admission_incidence_age_CI_plot %>% 
-  filter(!(Virus %in% c("ADV", "PIV", "hCoV"))) %>% 
-  # filter((burden %in% c("Emergency_only", "Hospital_admission"))) %>%
-  # filter(type_sej == "HOSPITALISATION") %>%
-  ggplot(aes(x = age_group, y = Inc1e5, colour = Adjustment, fill = Adjustment)) + 
-  geom_bar(stat = "identity", position = "dodge", alpha = 0.5) + 
-  geom_errorbar(aes(ymin = Lo, ymax = Hi, colour = Adjustment), width = 0.2, position = position_nudge(x = 0.25)) +
-  facet_grid(burden~Virus
-             , scales = "free_y"
-  ) + 
-  scale_colour_manual(values = adjustment_col) +
-  scale_fill_manual(values = adjustment_col) +
-  theme_bw() + 
-  guides(colour = "none") +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) + 
-  labs(x = "Age group", y = "Incidence per 100 000 catchment population per year", fill = "")
-
-ggsave("output/plots/admission_incidence_age_CI_big6.png", width = 25, height = 16, units = "cm", dpi = 600)
-
-
-admission_incidence_age_CI_plot %>% 
-  filter((Virus %in% c("ADV", "PIV", "hCoV"))) %>% 
-  # filter((burden %in% c("Emergency_only", "Hospital_admission"))) %>%
-  # filter(type_sej == "HOSPITALISATION") %>%
-  ggplot(aes(x = age_group, y = Inc1e5, colour = Adjustment, fill = Adjustment)) + 
-  geom_bar(stat = "identity", position = "dodge", alpha = 0.5) + 
-  geom_errorbar(aes(ymin = Lo, ymax = Hi, colour = Adjustment), width = 0.2, position = position_nudge(x = 0.25)) +
-  facet_grid(burden~Virus
-             , scales = "free_y"
-  ) + 
-  scale_colour_manual(values = adjustment_col) +
-  scale_fill_manual(values = adjustment_col) +
-  theme_bw() + 
-  guides(colour = "none") +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) + 
-  labs(x = "Age group", y = "Incidence per 100 000 catchment population per year", fill = "")
-
-ggsave("output/plots/admission_incidence_age_CI_small3.png", width = 15, height = 16, units = "cm", dpi = 600)
+ggsave("output/plots/admission_incidence_age_CI_big4.png", width = 25, height = 16, units = "cm", dpi = 600)
+ggsave("output/plots/admission_incidence_age_CI_small4.png", width = 25, height = 16, units = "cm", dpi = 600)
 
 
 
 # line plot for season
 
-patient_outcomes_inc_master %>% 
+admission_incidence_season_CI_plot <- patient_outcomes_inc_master %>% 
   # filter(!(seasonAdmitted %in% c("20/21", "21/22"))) %>%
   group_by(Virus, Adjustment, type_sej, burden, seasonAdmitted) %>% 
   summarise(n = sum(n)) %>% 
-  left_join(catchmentPop %>% group_by(seasonAdmitted, type_sej) %>% summarise(catchmentHosp = sum(catchmentHosp)), by = c("seasonAdmitted", "type_sej")) %>% 
+  left_join(catchmentPop %>% group_by(seasonAdmitted, type_sej) %>% 
+              summarise(catchmentHosp = sum(catchmentHosp)), by = c("seasonAdmitted", "type_sej")) %>% 
   mutate(Inc1e5 = n/catchmentHosp*1e5) %>% 
+  ungroup %>% 
+  group_by(Virus, seasonAdmitted, type_sej, burden) %>% 
+  mutate(n_knownCommunity = n[Adjustment == "knownCommunity"]) %>% 
   ungroup %>% 
   # filter((burden %in% c("Emergency_only", "Hospital_admission"))) %>%
   filter(Adjustment %in% c("knownCommunity", "afterCorrection", "afterCorrectionLo", "afterCorrectionHi")) %>% 
@@ -120,7 +127,7 @@ patient_outcomes_inc_master %>%
   mutate(CI = gsub("afterCorrection", "", gsub("knownCommunity", "", Adjustment)), 
          Adjustment = gsub("[LoHi]{2}$", "", Adjustment), 
          CI = ifelse(CI == "", "Inc1e5", CI)) %>% 
-  pivot_wider(id_cols = c("Virus", "seasonAdmitted", "type_sej", "burden", "Adjustment"), names_from = "CI", values_from = "Inc1e5") %>% 
+  pivot_wider(id_cols = c("Virus", "seasonAdmitted", "type_sej", "burden", "Adjustment", "n_knownCommunity"), names_from = "CI", values_from = "Inc1e5") %>% 
   mutate(Adjustment = fct_recode(Adjustment, Unadjusted = "knownCommunity", Adjusted = "afterCorrection")) %>% 
   mutate(Adjustment = fct_rev(Adjustment)) %>% 
   
@@ -129,18 +136,28 @@ patient_outcomes_inc_master %>%
            (burden == "Hospital_deathPlus30" & Adjustment == "Adjusted")) %>% 
   mutate(burden = fct_collapse(burden, Hospital_death = c("Hospital_deathRaw", "Hospital_deathPlus30"))) %>% 
   
-  mutate(burden = fct_relabel(burden, .fun = ~gsub("_", "\n", .x))) -> admission_incidence_season_CI_plot
+  mutate(burden = fct_relabel(burden, .fun = ~gsub("_", "\n", .x)))
 
 admission_incidence_season_CI_plot %>% 
+  # filter(Virus %in% virus_vec[1:8]) %>%
+  # filter(Virus %in% virus_vec[1:4]) %>%
+  filter(Virus %in% virus_vec[5:8]) %>%
+  mutate(across(Inc1e5:Hi, ~ifelse(n_knownCommunity == 0 & Adjustment == "Unadjusted" , NA, .x))) %>%
+  
   # filter((burden %in% c("Emergency_only", "Hospital_admission"))) %>%
-  ggplot(aes(x = seasonAdmitted, colour = Adjustment, group = Adjustment)) + 
+  ggplot(aes(x = seasonAdmitted, y = Inc1e5, colour = Adjustment, group = Adjustment)) + 
   # geom_bar(stat = "identity", position = "dodge") + 
   geom_ribbon(aes(ymin = Lo, ymax = Hi, fill = "Adjusted"), alpha = 0.3, colour = NA)+ 
-  geom_line(aes(y = Inc1e5))+ 
+  geom_line()+ 
+  geom_point(aes(size = Adjustment)) + 
   facet_grid(burden~Virus
              , scales = "free_y"
   ) + 
+  scale_y_log10(
+    breaks = scales::breaks_log(5), minor_breaks=scales::minor_breaks_n(3),
+    labels = scales::label_comma()) +
   scale_colour_manual(values = adjustment_col) +
+  scale_size_manual(values = c(Unadjusted = 1, Adjusted = 0)) + 
   scale_fill_manual(values = adjustment_col, guide="none") +
   theme_bw() + 
   guides(alpha = F) + 
@@ -148,51 +165,14 @@ admission_incidence_season_CI_plot %>%
   labs(x = "Season admitted", y = "Incidence per 100 000 catchment population per year") 
 
 
-ggsave("output/plots/admission_incidence_season_CI.png", width = 40, height = 13, units = "cm", dpi = 600)
-
-
-admission_incidence_season_CI_plot %>% 
-  filter(!(Virus %in% c("ADV", "PIV", "hCoV"))) %>% 
-  # filter((burden %in% c("Emergency_only", "Hospital_admission"))) %>%
-  ggplot(aes(x = seasonAdmitted, colour = Adjustment, group = Adjustment)) + 
-  # geom_bar(stat = "identity", position = "dodge") + 
-  geom_ribbon(aes(ymin = Lo, ymax = Hi, fill = "Adjusted"), alpha = 0.3, colour = NA)+ 
-  geom_line(aes(y = Inc1e5))+ 
-  facet_grid(burden~Virus
-             , scales = "free_y"
-  ) + 
-  scale_colour_manual(values = adjustment_col) +
-  scale_fill_manual(values = adjustment_col, guide="none") +
-  theme_bw() + 
-  guides(alpha = F) + 
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) + 
-  labs(x = "Season admitted", y = "Incidence per 100 000 catchment population per year")
-
-ggsave("output/plots/admission_incidence_season_CI_big6.png", width = 30, height = 13, units = "cm", dpi = 600)
-
-admission_incidence_season_CI_plot %>% 
-  filter((Virus %in% c("ADV", "PIV", "hCoV"))) %>% 
-  # filter((burden %in% c("Emergency_only", "Hospital_admission"))) %>%
-  ggplot(aes(x = seasonAdmitted, colour = Adjustment, group = Adjustment)) + 
-  # geom_bar(stat = "identity", position = "dodge") + 
-  geom_ribbon(aes(ymin = Lo, ymax = Hi, fill = "Adjusted"), alpha = 0.3, colour = NA)+ 
-  geom_line(aes(y = Inc1e5))+ 
-  facet_grid(burden~Virus
-             , scales = "free_y"
-  ) + 
-  scale_colour_manual(values = adjustment_col) +
-  scale_fill_manual(values = adjustment_col, guide="none") +
-  theme_bw() + 
-  guides(alpha = F) + 
-  theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.position = "none") + 
-  labs(x = "Season admitted", y = "Incidence per 100 000 catchment population per year")
-
-ggsave("output/plots/admission_incidence_season_CI_small3.png", width = 15, height = 16, units = "cm", dpi = 600)
+ggsave("output/plots/admission_incidence_season_CI.png", width = 40, height = 16, units = "cm", dpi = 600)
+ggsave("output/plots/admission_incidence_season_CI_big4.png", width = 30, height = 13, units = "cm", dpi = 600)
+ggsave("output/plots/admission_incidence_season_CI_small4.png", width = 30, height = 13, units = "cm", dpi = 600)
 
 
 # big bar plot for months
 
-patient_outcomes_inc_master %>% 
+admission_incidence_month_CI_plot <- patient_outcomes_inc_master %>% 
   group_by(Virus, age_group, seasonAdmitted, monthAdmitted, Adjustment, type_sej, burden) %>% 
   summarise(n = sum(n)) %>% 
   left_join(catchmentPop, by = c("seasonAdmitted", "age_group", "type_sej")) %>% 
@@ -214,9 +194,11 @@ patient_outcomes_inc_master %>%
          CI = ifelse(CI == "", "Inc1e5", CI)) %>% 
   pivot_wider(id_cols = c("Virus", "age_group", "seasonAdmitted", "monthAdmitted", "Adjustment"), names_from = "CI", values_from = "Inc1e5") %>% 
   mutate(Adjustment = fct_recode(Adjustment, Unadjusted = "knownCommunity", Adjusted = "afterCorrection")) %>% 
-  mutate(Adjustment = fct_rev(Adjustment)) -> admission_incidence_month_CI_plot
+  mutate(Adjustment = fct_rev(Adjustment))
 
 admission_incidence_month_CI_plot %>% 
+  filter(Virus %in% virus_vec[1:8]) %>% 
+  
   ggplot(aes(x = monthAdmitted, colour = Virus, linetype = Adjustment)) + 
   geom_line(aes(y = Inc1e5)) + 
   geom_ribbon(aes(ymin = Lo, ymax = Hi, fill = Virus), alpha = 0.3, colour = NA)+ 
@@ -251,10 +233,10 @@ admission_incidence_month_CI_plot %>%
   scale_x_date(date_breaks = "1 year", date_labels = "%Y") + 
   labs(x = "Month admitted", y = "Incidence per 100 000 catchment population per month")
 
-ggsave("output/plots/admission_incidence_month_CI_big3.png", width = 30, height = 15, units = "cm", dpi = 600)
+ggsave("output/plots/admission_incidence_month_CI_big4.png", width = 30, height = 15, units = "cm", dpi = 600)
 
 admission_incidence_month_CI_plot %>% 
-  filter(Virus %in% virus_vec[5:9]) %>% 
+  filter(Virus %in% virus_vec[5:8]) %>% 
   ggplot(aes(x = monthAdmitted, colour = Virus, linetype = Adjustment)) + 
   geom_line(aes(y = Inc1e5)) + 
   geom_ribbon(aes(ymin = Lo, ymax = Hi, fill = Virus), alpha = 0.3, colour = NA)+ 
@@ -270,34 +252,41 @@ admission_incidence_month_CI_plot %>%
   scale_x_date(date_breaks = "1 year", date_labels = "%Y") + 
   labs(x = "Month admitted", y = "Incidence per 100 000 catchment population per month")
 
-ggsave("output/plots/admission_incidence_month_CI_others.png", width = 30, height = 15, units = "cm", dpi = 600)
+ggsave("output/plots/admission_incidence_month_CI_small4.png", width = 30, height = 15, units = "cm", dpi = 600)
 
 
 # testing rates plot for supplement
 
+patient_outcomes_virus_raw <- patient_outcomes %>% 
+  ungroup %>% 
+  select(IPP_sejour, type_sej, ICU, Death, season_admitted, age_group) %>% 
+  left_join(patient_knownStatus %>% 
+              select(IPP_sejour, Virus, test02))
+
 rbind(
-  patient_outcomes_virus_correction %>% 
+  patient_outcomes_virus_raw %>% 
     group_by(Virus, type_sej, season_admitted, age_group, test02) %>% 
     summarise(n = n_distinct(IPP_sejour)) %>% 
-    ungroup %>% 
+    ungroup %>%  
     mutate(burden = ifelse(type_sej == "HOSPITALISATION", "Hospital_admission", "Emergency_only")) %>% 
     select(-type_sej)
   ,
-  patient_outcomes_virus_correction %>% 
+  patient_outcomes_virus_raw %>% 
     filter(ICU == 1, type_sej == "HOSPITALISATION") %>% 
     group_by(Virus, season_admitted, age_group, test02) %>% 
     summarise(n = n_distinct(IPP_sejour)) %>% 
-    ungroup %>% 
+    ungroup %>%  
     mutate(burden = "Hospital_ICU") 
   ,
-  patient_outcomes_virus_correction %>% 
+  patient_outcomes_virus_raw %>% 
     filter(Death == 1, type_sej == "HOSPITALISATION") %>% 
     group_by(Virus, season_admitted, age_group, test02) %>% 
     summarise(n = n_distinct(IPP_sejour)) %>% 
-    ungroup %>% 
+    ungroup %>%  
     mutate(burden = "Hospital_death") 
 ) %>% 
   complete(Virus, burden, season_admitted, age_group, test02, fill = list(n = 0)) %>% 
+  # filter(Virus %in% virus_vec[1:8]) %>% 
   mutate(n = if_else(Virus == "SARS-CoV-2" & season_admitted %in% c("16/17", "17/18", "18/19"), NA, n)) %>% 
   pivot_wider(names_from = "test02", values_from = "n") %>% 
   rename(Untested = "0", Tested = "1") %>% 
@@ -356,6 +345,7 @@ ratio_season_CI <- admission_incidence_season_CI_plot %>%
          RatioHi = Hi_Adjusted/Inc1e5_Unadjusted)
 
 ratio_season_CI %>% 
+  filter(Virus %in% virus_vec[1:8]) %>% 
   # filter((burden %in% c("Emergency_only", "Hospital_admission"))) %>%
   # filter(type_sej == "HOSPITALISATION") %>%
   mutate(across(starts_with("Ratio"), ~ifelse(is.finite(.x), .x, NA))) %>% 
@@ -411,6 +401,7 @@ ggsave("output/plots/ratio_month_CI.png", width = 30, height = 16, units = "cm",
 proportion_plot <- patient_outcomes_inc_master %>% 
   # filter(!(seasonAdmitted %in% c("20/21", "21/22"))) %>%
   filter(!(seasonAdmitted %in% c("16/17", "17/18", "18/19", "19/20", "20/21", "21/22"))) %>%
+  filter(Virus %in% virus_vec[1:8]) %>% 
   group_by(Virus, Adjustment, type_sej, burden, seasonAdmitted) %>% 
   summarise(n = sum(n)) %>% 
   left_join(catchmentPop %>% group_by(seasonAdmitted, type_sej) %>% summarise(catchmentHosp = sum(catchmentHosp)), by = c("seasonAdmitted", "type_sej")) %>% 
@@ -451,6 +442,7 @@ ggsave("output/plots/proportion_incidence.png", width = 25, height = 10, units =
 
 proportion_plot_season <- patient_outcomes_inc_master %>% 
   # filter(!(seasonAdmitted %in% c("20/21", "21/22"))) %>%
+  filter(Virus %in% virus_vec[1:8]) %>% 
   group_by(Virus, Adjustment, type_sej, burden, seasonAdmitted) %>% 
   summarise(n = sum(n)) %>% 
   left_join(catchmentPop %>% group_by(seasonAdmitted, type_sej) %>% summarise(catchmentHosp = sum(catchmentHosp)), by = c("seasonAdmitted", "type_sej")) %>% 
@@ -494,6 +486,7 @@ ggsave("output/plots/proportion_incidence_season.png", width = 25, height = 25, 
 
 proportion_plot_age <- patient_outcomes_inc_master %>% 
   # filter(!(seasonAdmitted %in% c("20/21", "21/22"))) %>%
+  filter(Virus %in% virus_vec[1:8]) %>% 
   filter(!(seasonAdmitted %in% c("16/17", "17/18", "18/19", "19/20", "20/21", "21/22"))) %>%
   group_by(Virus, Adjustment, type_sej, burden, age_group, seasonAdmitted) %>% 
   summarise(n = sum(n)) %>% 
@@ -637,7 +630,7 @@ patient_outcomes_inc_master %>%
   mutate(Adjustment = fct_recode(Adjustment, Unadjusted = "knownCommunity", Adjusted = "afterCorrection")) %>% 
   group_by(monthAdmitted, Adjustment) %>% 
   mutate(totalInc1e5 = sum(Inc1e5, na.rm = T)) %>% 
-  left_join(data_sejours %>% 
+  left_join(data_sejours_code %>% 
               rename(monthAdmitted = month_admitted, seasonAdmitted = season_admitted) %>% 
               group_by(type_sej, seasonAdmitted, monthAdmitted) %>% 
               summarise(FIRESPtotal = n_distinct(IPP_sejour)) %>% 

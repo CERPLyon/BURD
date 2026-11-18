@@ -116,7 +116,7 @@ if(F){
   data_bact_classified %>% select(IPP_alea, IPP_sejour, age_group, sample_type1:classification) %>% write_csv2(paste0("Z:/FIRESP 2/output/BactTreat/data_bact_classified.csv"))
   data_treat %>% select(-NDA_alea) %>% write_csv2(paste0("Z:/FIRESP 2/output/BactTreat/data_treat.csv"))
   
-  data_sejours %>% 
+  data_sejours_all %>% 
     group_by(IPP_alea, IPP_sejour, date_ent_sejour, date_sor_sejour, type_sej, mode_sor) %>% 
     summarise(anyICU = as.numeric(any(rea_SI %in% 1))) %>% 
     relocate(mode_sor, .after = everything()) %>% 

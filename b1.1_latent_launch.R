@@ -65,9 +65,6 @@ set.seed(this_seed)
 
 print("get master dataset")
 this_dataset <- data_PCR_sejour_collapseSubtypes %>% 
-  # left_join(data_sejours %>% select(IPP_sejour, inclusion_ICD10) %>% unique) %>% 
-  # filter(inclusion_ICD10 == 1) %>% 
-  # select(-inclusion_ICD10) %>% 
   filter(!(season_admitted %in% c("20/21", "21/22"))) %>% #take out the pandemic period for everyone
   filter((this_virus != "SARS-CoV-2") | (season_admitted %in% c("22/23", "23/24", "24/25"))) %>% #and for COVID make sure it's only post-pandemic
   filter(resultatbis %in% c("POSITIVE", "NEGATIVE")) %>% 

@@ -19,25 +19,44 @@ data_PCR_NDA <- data_PCR_sejour_collapseSubtypes %>%
   ungroup %>% 
   complete(NDA_pseudo, Virus, fill = list(TestPos = NA))
 
-data_NDA_long <- diag_sejour_long %>% 
-  # left_join(data_PCR_NDA, by = "NDA_pseudo", relationship = "many-to-many") %>% 
-  transmute(NDA_pseudo, IPP_sejour, CIM10 = code) %>% 
-  unique %>% 
-  full_join(data_sejours %>%
-              group_by(NDA_pseudo) %>%
-              summarise(age = age[1],
-                        age_group = age_group[1],
-                        relativeWeek = get_relativeWeek(date_ent_sejour[1]),
-                        monthname = lubridate::month(date_ent_sejour[1], label = T),
-                        monthnum = lubridate::month(date_ent_sejour[1], label = F),
-                        season_admitted = season_admitted[1],
-                        catego_UM = catego_UM[1],
-                        catego_UM_agg = catego_UM_agg[1]
-                        ),
-            # left_join(.Last.value
-            #             , 
-                      by = "NDA_pseudo", relationship = "many-to-one")
+# data_NDA_long <- diag_sejour_long %>%
+#   # left_join(data_PCR_NDA, by = "NDA_pseudo", relationship = "many-to-many") %>%
+#   transmute(NDA_pseudo, IPP_sejour, CIM10 = code) %>%
+#   unique %>%
+#   # HERE SHOULD IT BE RIGHT JOIN???
+#   full_join(data_sejours_all %>%
+#               group_by(NDA_pseudo) %>%
+#               summarise(age = age[1],
+#                         age_group = age_group[1],
+#                         relativeWeek = get_relativeWeek(date_ent_sejour[1]),
+#                         monthname = lubridate::month(date_ent_sejour[1], label = T),
+#                         monthnum = lubridate::month(date_ent_sejour[1], label = F),
+#                         season_admitted = season_admitted[1],
+#                         catego_UM = catego_UM[1],
+#                         catego_UM_agg = catego_UM_agg[1]
+#                         ),
+#                       by = "NDA_pseudo", relationship = "many-to-one")
 
+
+data_NDA_long <- 
+  # data_sejours_all %>%
+  data_sejours_code %>%
+  group_by(IPP_sejour, NDA_pseudo) %>%
+  summarise(age = age[1],
+            age_group = age_group[1],
+            relativeWeek = get_relativeWeek(date_ent_sejour[1]),
+            monthname = lubridate::month(date_ent_sejour[1], label = T),
+            monthnum = lubridate::month(date_ent_sejour[1], label = F),
+            season_admitted = season_admitted[1],
+            catego_UM = catego_UM[1],
+            catego_UM_agg = catego_UM_agg[1]
+  ) %>% 
+  ungroup %>% 
+  left_join(diag_sejour_long %>% 
+              # left_join(data_PCR_NDA, by = "NDA_pseudo", relationship = "many-to-many") %>% 
+              transmute(NDA_pseudo, CIM10 = code) %>% 
+              unique, 
+            by = "NDA_pseudo", relationship = "one-to-many")
 
   data_NDA_wide_noBiomarkers <- data_NDA_long %>% 
     # filter(Virus == this_virus) %>% 
@@ -76,7 +95,7 @@ data_NDA_long <- diag_sejour_long %>%
   col_info <- colSums(data_NDA_wide != 0, na.rm = T)
 
   
-  data_NDA_wide
+  
   data_NDA_wide[, c("age_group", 
                     "monthname",
                     "monthnum", 
@@ -116,7 +135,7 @@ remove(data_NDA_reduced_strictNDA)
 if(T){
   acute_day_limit = 3
   
-  when_nda <- data_sejours %>% 
+  when_nda <- data_sejours_code %>% 
     group_by(IPP_sejour, date_ent_sejour, NDA_pseudo) %>% 
     summarise(date_ent = min(date_ent), date_sor = max(date_sor)) %>% 
     mutate(nda_start_sinceAdmission = as.numeric(date_ent - date_ent_sejour), 

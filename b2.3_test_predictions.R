@@ -8,7 +8,7 @@ format_fix <- function(val, dig){
   format(nsmall = dig, round(digits = dig, val))
 }
 
-
+sensAnal = ""
 for(sensAnal in c("", "_noSpecific", "_strictNDA")){
 
   # load files
@@ -211,7 +211,7 @@ for(sensAnal in c("", "_noSpecific", "_strictNDA")){
   
   
   
-  NDA_virus_prediction_sejour = data_sejours %>% 
+  NDA_virus_prediction_sejour = data_sejours_code %>% 
     group_by(IPP_sejour, NDA_pseudo) %>% 
     summarise(date_ent = min(date_ent), 
               date_ent_sejour = date_ent_sejour[1]) %>% 
@@ -257,7 +257,6 @@ for(sensAnal in c("", "_noSpecific", "_strictNDA")){
     theme_bw()
   
   ggsave(paste0("output/plots/xg_prediction", sensAnal, ".png"), width = 20, height = 12, units = "cm", dpi = 600)
-  
   
   
   #### variable importance
@@ -315,18 +314,22 @@ for(sensAnal in c("", "_noSpecific", "_strictNDA")){
            Description = gsub("elswhr", "elsewhere", Description)
     ) %>% 
     mutate(Description = ifelse(Variable == "relativeWeek", "Week relative to December 31st", Description), 
-           Description = ifelse(Variable == "Season", "September to August", Description), 
+           Description = ifelse(Variable == "Season", "Runs from September to August", Description), 
            Description = ifelse(Variable == "Month", "Calendar month", Description), 
            Description = ifelse(Variable == "catego_UM", "Hospital service category", Description), 
            Description = ifelse(Variable == "CRP_min", "C-reactive protein - minimum", Description), 
            Description = ifelse(Variable == "CRP_max", "C-reactive protein - maximum", Description), 
+           Description = ifelse(Variable == "CRP_median", "C-reactive protein - median", Description), 
+           Description = ifelse(Variable == "EOSI_median", "Polynuclear eosinophils - median", Description), 
            Description = ifelse(Variable == "EOSI_max", "Polynuclear eosinophils - maximum", Description), 
            
            Description = ifelse(Variable == "FIBR_min", "Fibrinogen - minimum", Description), 
            
            Description = ifelse(Variable == "LACT_mean", "Lymphocytes - mean", Description), 
+           Description = ifelse(Variable == "LACT_median", "Lymphocytes - median", Description), 
            Description = ifelse(Variable == "LACT_n", "Lymphocytes - number of observations", Description), 
            
+           Description = ifelse(Variable == "MONO_mean", "Monocytes - mean", Description), 
            Description = ifelse(Variable == "MONO_n", "Monocytes - number of observations", Description), 
            
            Description = ifelse(Variable == "MYEL_n", "Myelaemia - number of observations", Description), 
@@ -336,19 +339,29 @@ for(sensAnal in c("", "_noSpecific", "_strictNDA")){
            Description = ifelse(Variable == "GLUC_min", "Glucose - minimum", Description), 
            Description = ifelse(Variable == "GLUC_max", "Glucose - maximum", Description), 
            Description = ifelse(Variable == "GLUC_mean", "Glucose - mean", Description), 
+           Description = ifelse(Variable == "GLUC_median", "Glucose - median", Description), 
            Description = ifelse(Variable == "PLAQ_max", "Platelets - maximum", Description), 
+           Description = ifelse(Variable == "NEUT_min", "Neutrophils - minimum", Description), 
            Description = ifelse(Variable == "NEUT_max", "Neutrophils - maximum", Description), 
+           Description = ifelse(Variable == "NEUT_median", "Neutrophils - median", Description), 
            Description = ifelse(Variable == "PH_min", "pH - minimum", Description), 
            Description = ifelse(Variable == "PH_mean", "pH - mean", Description), 
            Description = ifelse(Variable == "PO2_min", "pO2 - minimum", Description),
            Description = ifelse(Variable == "PO2_max", "pO2 - maximum", Description),
            Description = ifelse(Variable == "PO2_mean", "pO2 - mean", Description),
            
+           Description = ifelse(Variable == "PCO2_min", "pCO2 - minimum", Description),
+           Description = ifelse(Variable == "PCO2_max", "pCO2 - maximum", Description),
+           Description = ifelse(Variable == "PCO2_mean", "pCO2 - mean", Description),
+           
            Description = ifelse(Variable == "CREA_min", "Creatinine - minimum", Description), 
            Description = ifelse(Variable == "CREA_max", "Creatinine - maximum", Description),
-           Description = ifelse(Variable == "CREA_median", "Creatinine - median", Description)
+           Description = ifelse(Variable == "CREA_median", "Creatinine - median", Description),
+           
+           Description = ifelse(Variable == "PCT_mean", "Procalcitonin - mean", Description)
            ) %>% 
     mutate(Contribution = format_fix(Contribution, 3)) %>% 
     fwrite(paste0("output/tables/xg_importance", sensAnal, ".csv"), sep = ";")
   
 }
+

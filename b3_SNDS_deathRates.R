@@ -54,8 +54,8 @@ background_mortality <- mortality_ageGroup %>%
 # deaths_age_dp_raw <- read_csv2("~/Team CERP/Aby Ba/SNDS/HCL_FIRESP_AGG_extrac_21_04.csv")
 # deaths_age_dp_raw <- read_csv2("~/Team CERP/Aby Ba/SNDS/HCL_FIRESP_AGG_extrac_12_05.csv")
 # deaths_age_dp_raw <- read_csv2("~/Team CERP/Aby Ba/SNDS/HCL_FIRESP_AGG_extrac_19_05.csv")
-deaths_age_dp_raw <- read_csv2("data/SNDS/HCL_FIRESP_AGG_extrac_19_05.csv") OLD
-deaths_age_dp_raw <- read_csv2("data/SNDS/HCL_FIRESP_AGG_extrac_09_07.csv") NEW
+# deaths_age_dp_raw <- read_csv2("data/SNDS/HCL_FIRESP_AGG_extrac_19_05.csv") OLD
+deaths_age_dp_raw <- read_csv2("data/SNDS/HCL_FIRESP_AGG_extrac_09_07.csv")
 
 deaths_age_SNDS <- deaths_age_dp_raw %>% 
   mutate(AGE_GROUP = case_when(AGE_GROUP == "00-01" ~ "0-1", 
@@ -95,7 +95,7 @@ deathRate_age_SNDS %>%
 
 
 #### investigation, not essential
-dp_deaths_FIRESP <- data_sejours %>% 
+dp_deaths_FIRESP <- data_sejours_code %>% 
     # filter(type_sej == "HOSPITALISATION") %>%
   filter(!(season_admitted %in% c("20/21", "21/22"))) %>% 
   group_by(IPP_sejour) %>%

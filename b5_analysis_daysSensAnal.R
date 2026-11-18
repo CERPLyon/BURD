@@ -1,6 +1,6 @@
 #### inferred from late testing ####
 
-patient_knownStatus_days <- data_sejours %>% 
+patient_knownStatus_days <- data_sejours_code %>% 
   select(IPP_sejour) %>% unique %>% 
   left_join(data_PCR_sejour_collapseSubtypes) %>% 
   select(IPP_sejour, Virus, resultatbis, testday) %>% 
@@ -21,7 +21,7 @@ patient_knownStatus_days <- data_sejours %>%
 #unadjusted burden
 
 patient_outcomes %>% 
-  # filter(type_sej == "HOSPITALISATION") %>% 
+  # filter(type_sej == "HOSPITALISATION") %>%
   left_join(patient_knownStatus_days %>% select(IPP_sejour, Virus, acute_day_limit, suspected_day_limit, knownCommunity, probableCommunity), relationship = "one-to-many") %>% 
   group_by(Virus, acute_day_limit, suspected_day_limit
            # , type_sej, ICU, Death
@@ -33,13 +33,19 @@ patient_outcomes %>%
 NDA_virus_prediction_sejour <- read_csv("output/NDA_virus_prediction_sejour.csv")
 
 mlPrediction_sejour_days <- NDA_virus_prediction_sejour %>% 
-  cross_join(tibble(suspected_day_limit = c(7, 10))) %>% 
-  filter(NDA_startDay < suspected_day_limit) %>% 
-  group_by(IPP_sejour, Virus, suspected_day_limit) %>% 
+  # cross_join(tibble(suspected_day_limit = c(7, 10))) %>% 
+  # filter(NDA_startDay < suspected_day_limit) %>% 
+  # group_by(IPP_sejour, Virus, suspected_day_limit) %>% 
+  cross_join(tibble(acute_day_limit = 1:5)) %>%
+  filter(NDA_startDay < acute_day_limit) %>%
+  group_by(IPP_sejour, Virus, acute_day_limit) %>%
   # summarise(infected_rfPredicted = median(prediction))
   arrange(.by_group = T, NDA_startDay) %>% 
   dplyr::slice(1) %>% 
-  transmute(IPP_sejour, Virus, suspected_day_limit, infected_mlPredicted = prediction, infected_mlPredictedLo = predictionLo, infected_mlPredictedHi = predictionHi) %>% 
+  transmute(IPP_sejour, Virus, 
+            acute_day_limit, 
+            # suspected_day_limit, 
+            infected_mlPredicted = prediction, infected_mlPredictedLo = predictionLo, infected_mlPredictedHi = predictionHi) %>% 
   ungroup
 
 
@@ -51,18 +57,22 @@ estStatus_days <- read_csv2(file = paste0("output/estStatus_age_sensAnal.csv"))
 
 
 
-
+save.image()
 
 patient_outcomes_virus_correction_days <- patient_outcomes %>% 
   left_join(patient_knownStatus_days %>% select(IPP_sejour, Virus, acute_day_limit, suspected_day_limit, testADM, testSUSP, knownCommunity, probableCommunity), relationship = "one-to-many") %>% 
   left_join(estStatus_days %>% transmute(IPP_sejour = patient_id, Virus, 
-                                         acute_day_limit, suspected_day_limit, 
+                                         acute_day_limit, 
+                                         suspected_day_limit, 
                                     late_infected = p_infected, late_infected_lo = p_infected_lo, late_infected_hi = p_infected_hi), by = c("IPP_sejour", "Virus", "acute_day_limit", "suspected_day_limit"), relationship = "one-to-one") %>% 
   left_join(mlPrediction_sejour_days %>% transmute(IPP_sejour, Virus, 
-                                                   suspected_day_limit, 
-                                                   untested_infected = infected_mlPredicted, untested_infected_lo = infected_mlPredictedLo, untested_infected_hi = infected_mlPredictedHi), by = c("IPP_sejour", "Virus", "suspected_day_limit"), relationship = "many-to-one") %>% 
+                                                   acute_day_limit,
+                                                   # suspected_day_limit,
+                                                   untested_infected = infected_mlPredicted, untested_infected_lo = infected_mlPredictedLo, untested_infected_hi = infected_mlPredictedHi), by = c("IPP_sejour", "Virus", "acute_day_limit"), relationship = "many-to-one") %>% 
   mutate(Virus = factor(Virus, levels = virus_vec)) %>% 
   filter(Virus != "InfluenzaNT") %>% 
+  filter(Virus != "hCoV") %>% 
+  
   mutate(correctedCommunity_late = case_when(knownCommunity == 1 ~ 1, #if there's a positive test on days 0-2, it's a defined community case
                                              (testADM == 1) & (knownCommunity == 0) ~ 0, #if there's a negative test, it's a non-case
                                              (testSUSP == 1) ~ late_infected, #if there's a test on days 3-6, use the late testing analysis
@@ -118,10 +128,10 @@ patient_outcomes_virus_correction_days <- patient_outcomes %>%
 
 
 
-
-patient_outcomes_inc_master_days <- patient_outcomes_virus_correction_days %>% 
+patient_outcomes_days_inc_master <- patient_outcomes_virus_correction_days %>% 
   # mutate(month_name = month(month_admitted, label = T, abbr = T, locale = "EN")) %>% 
   # filter(type_sej == "HOSPITALISATION") %>%
+  filter(knownCommunityViruses <= 1) %>% 
   rename(seasonAdmitted = season_admitted, monthAdmitted = month_admitted) %>% 
   group_by(acute_day_limit, suspected_day_limit, age_group, seasonAdmitted, monthAdmitted, type_sej, Virus) %>% 
   {rbind(summarise(., 

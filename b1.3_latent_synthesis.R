@@ -1,3 +1,4 @@
+library(tidyverse)
 library(data.table)
 acute_day_limit = 3 #threshold to define a known community infection
 suspected_day_limit = 7 #threshold for a suspected community infection

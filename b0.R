@@ -30,8 +30,12 @@ biomarker_savefile = paste0(path.out, "biomarker_tmp.RData")
 bact_savefile = paste0(path.out, "bact_tmp.RData")
 
 load(tmp_savefile, verbose = T)
-load(biomarker_savefile)
-load(bact_savefile)
+load(biomarker_savefile, verbose = T)
+load(bact_savefile, verbose = T)
+
+data_sejours_all <- data_sejours
+data_sejours_code <- data_sejours_all %>% filter(inclusion_ICD10 == 1)
+remove(data_sejours)
 
 # load files
 # catchment_rhone_interp <- read_delim(file = "Z:/data/INSEE/Rhone_PopAge_extrapolated.csv", delim = ";", show_col_types = FALSE)
@@ -45,7 +49,7 @@ HCLcatchment_ageyear
 # define key datasets
 
 data_PCR_sejour_age <- data_PCR %>% 
-  left_join(data_sejours %>% select(NDA_pseudo_ordre, age, type_sej, year_admitted, week_admitted, date_ent_sejour), by = "NDA_pseudo_ordre") %>% 
+  left_join(data_sejours_code %>% select(NDA_pseudo_ordre, age, type_sej, year_admitted, week_admitted, date_ent_sejour), by = "NDA_pseudo_ordre") %>% 
   mutate(testday = difftime(date_preleve, date_ent_sejour, units = "days") %>% as.numeric)# %>% 
 
 data_PCR_sejour_collapseSubtypes <- data_PCR_sejour_age %>% 
@@ -62,8 +66,8 @@ remove(data_PCR_sejour_age)
 # virus_order_basic <- data_PCR$Virus %>% table %>% sort(decreasing = T) %>% names
 # virus_order <- paste0(c("Influenza"), c("A", "B", "NT")) %>% {c(., setdiff(virus_order_basic, .))}
 
-age_vec = data_sejours$age_group %>% levels
-season_vec = data_sejours$season_admitted %>% unique %>% sort
+age_vec = data_sejours_code$age_group %>% levels
+season_vec = data_sejours_code$season_admitted %>% unique %>% sort
 
 
 summ_stats <- rbind(as.data.table(biochimie), as.data.table(hematologie))[, .(n_obs = .N, 
@@ -102,7 +106,7 @@ summ_stats_wide <- summ_stats %>%
   pivot_wider(id_cols = c("NDA_pseudo", "IPP_sejour"), names_from = analysis, names_glue = "{analysis}_{.value}",
               values_from = c("n", "max", "min", "mean", "median")) %>% 
   rename_all(~gsub("dfg 2009", "dfg", .x)) %>% 
-  full_join(data_sejours %>% 
+  full_join(data_sejours_all %>% 
               select(NDA_pseudo, IPP_sejour) %>% 
               unique) %>% 
   mutate(across(ends_with("_n"), ~replace_na(.x, 0)))
@@ -117,6 +121,7 @@ remove(summ_stats)
 remove(diag_sejour_long_beforeExclusions)
 
 sort( sapply(ls(),function(x){object.size(get(x))})) 
+
 # summ_stats_02_wide %>% 
 #   write_csv("data/biomarkers_summ_stat_02.csv")
 

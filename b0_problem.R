@@ -8,7 +8,7 @@ testday_bardata <- data_PCR_sejour_collapseSubtypes %>%
             result = resultatbis[1]) %>% 
   # mutate(result = fct_rev(result)) %>%
   # mutate(Virus = fct_recode(Virus, `RV/EV` = "RVEV")) %>%
-  right_join(expand.grid(list(IPP_sejour = unique(data_sejours$IPP_sejour), Virus = virus_vec))) %>% 
+  right_join(expand.grid(list(IPP_sejour = unique(data_sejours_code$IPP_sejour), Virus = virus_vec))) %>% 
   mutate(Virus = factor(Virus, virus_vec)) %>% 
   mutate(first_testday = replace_na(first_testday, replace = Inf))
 
