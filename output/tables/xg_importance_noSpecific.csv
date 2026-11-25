@@ -1,0 +1,91 @@
+V1;Rank;Contribution;Variable;Description
+InfluenzaA;1;0.165;relativeWeek;Week relative to December 31st
+"";2;0.071;J108;ICD-10: Influenza with other manifestations, seasonal influenza virus identified
+"";3;0.068;Season;September to August
+"";4;0.028;LEUC_max;
+"";5;0.019;J189;ICD-10: Pneumonia, unspecified organism
+"";6;0.017;J219;ICD-10: Acute bronchiolitis, unspecified
+"";7;0.017;J128;ICD-10: Other viral pneumonia
+"";8;0.016;EOSI_max;Polynuclear eosinophils - maximum
+"";9;0.016;EOSI_median;
+"";10;0.015;CRP_min;C-reactive protein - minimum
+InfluenzaB;1;0.172;Season;September to August
+"";2;0.109;relativeWeek;Week relative to December 31st
+"";3;0.080;J108;ICD-10: Influenza with other manifestations, seasonal influenza virus identified
+"";4;0.046;Age group;
+"";5;0.033;LEUC_mean;
+"";6;0.021;EOSI_mean;
+"";7;0.019;CRP_min;C-reactive protein - minimum
+"";8;0.017;CREA_max;Creatinine - maximum
+"";9;0.016;LEUC_max;
+SARS-CoV-2;1;0.247;J128;ICD-10: Other viral pneumonia
+"";2;0.063;Z290;ICD-10: Isolation as prophylactic measure
+"";3;0.048;Season;September to August
+"";4;0.048;relativeWeek;Week relative to December 31st
+"";5;0.039;Age group;
+"";6;0.019;J189;ICD-10: Pneumonia, unspecified organism
+RSV;1;0.281;Age group;
+"";2;0.148;relativeWeek;Week relative to December 31st
+"";3;0.056;Season;September to August
+"";4;0.026;B974;ICD-10: Respiratory syncytial virus causing diseases classified elsewhere
+"";5;0.016;EOSI_max;Polynuclear eosinophils - maximum
+hMPV;1;0.121;relativeWeek;Week relative to December 31st
+"";2;0.048;Season;September to August
+"";3;0.036;Age group;
+"";4;0.025;EOSI_max;Polynuclear eosinophils - maximum
+"";5;0.018;GLUC_min;Glucose - minimum
+"";6;0.018;J208;ICD-10: Acute bronchitis due to other specified organisms
+"";7;0.018;PLAQ_max;Platelets - maximum
+"";8;0.017;GLUC_max;Glucose - maximum
+"";9;0.016;CRP_max;C-reactive protein - maximum
+"";10;0.016;NEUT_min;
+"";11;0.015;LEUC_max;
+"";12;0.015;EOSI_mean;
+RVEV;1;0.091;Age group;
+"";2;0.082;relativeWeek;Week relative to December 31st
+"";3;0.038;J218;ICD-10: Acute bronchiolitis due to other specified organisms
+"";4;0.035;Season;September to August
+"";5;0.021;J128;ICD-10: Other viral pneumonia
+"";6;0.017;GLUC_min;Glucose - minimum
+"";7;0.017;LEUC_max;
+"";8;0.016;GLUC_max;Glucose - maximum
+ADV;1;0.075;Age group;
+"";2;0.058;Season;September to August
+"";3;0.056;relativeWeek;Week relative to December 31st
+"";4;0.030;CRP_mean;
+"";5;0.028;CRP_min;C-reactive protein - minimum
+"";6;0.022;LEUC_max;
+"";7;0.021;LYMP_max;Lymphocytes - maximum
+"";8;0.019;PO2_min;pO2 - minimum
+"";9;0.018;CRP_max;C-reactive protein - maximum
+"";10;0.018;GLUC_max;Glucose - maximum
+"";11;0.018;GLUC_mean;Glucose - mean
+"";12;0.017;EOSI_median;
+"";13;0.016;GLUC_min;Glucose - minimum
+"";14;0.016;NEUT_min;
+"";15;0.016;EOSI_min;
+"";16;0.016;PLAQ_max;Platelets - maximum
+"";17;0.016;NEUT_max;Neutrophils - maximum
+PIV;1;0.111;relativeWeek;Week relative to December 31st
+"";2;0.043;Age group;
+"";3;0.039;Season;September to August
+"";4;0.029;EOSI_mean;
+"";5;0.023;CREA_min;Creatinine - minimum
+"";6;0.020;PH_mean;pH - mean
+"";7;0.020;EOSI_median;
+"";8;0.020;CRP_min;C-reactive protein - minimum
+"";9;0.016;J218;ICD-10: Acute bronchiolitis due to other specified organisms
+"";10;0.016;PO2_max;pO2 - maximum
+"";11;0.015;PLAQ_min;
+hCoV;1;0.223;relativeWeek;Week relative to December 31st
+"";2;0.209;Season;September to August
+"";3;0.033;NEUT_median;
+"";4;0.029;PCO2_mean;
+"";5;0.026;EOSI_max;Polynuclear eosinophils - maximum
+"";6;0.024;BASO_mean;
+"";7;0.022;LACT_median;
+"";8;0.021;CRP_median;
+"";9;0.019;NEUT_min;
+"";10;0.017;PLAQ_median;
+"";11;0.017;LYMP_max;Lymphocytes - maximum
+"";12;0.016;GLUC_n;

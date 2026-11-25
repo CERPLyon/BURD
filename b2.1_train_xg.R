@@ -9,7 +9,7 @@ library(caret)
 library(xgboost)
 library(PRROC)
 
-source("xgb_ncv.R")
+source("b2.2_xgb_ncv.R")
 
 # library(randomForest)
 
@@ -67,7 +67,7 @@ if(sensAnal_flag == "reg"){
 
 # prep data
 print("source prep file")
-source("b2.2_prep_xg.R")
+source("b2.3_prep_xg.R")
 
 
 if(optimise){

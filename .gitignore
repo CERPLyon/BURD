@@ -1,12 +1,23 @@
 Archive/*
 data/*
+side_analyses/*
 ml/*
 ml*/*
-output/*
 
 !data/.gitkeep
 !ml/.gitkeep
+!ml_noSpecific/.gitkeep
+!ml_strictNDA/.gitkeep
+output/*
+output/diag/*
 !output/diag/.gitkeep
+output/piecewise/*
+!output/piecewise/
+!output/piecewise/.gitkeep
+!output/plots/
+!output/plots/.gitkeep
+!output/tables/
+!output/tables/.gitkeep
 
 
 

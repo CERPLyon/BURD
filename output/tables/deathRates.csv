@@ -1,0 +1,136 @@
+rank;DP;Description;age_group;deathRate_FIRESP;deathRate_within30
+1;Z515;Palliative care;65-79;0.690;0.116
+2;Z515;Palliative care;80+;0.685;0.000
+3;Z515;Palliative care;18-64;0.579;0.140
+4;R572;Septic shock;65-79;0.457;0.038
+5;J80;Acute respiratory distress syndrome;65-79;0.427;0.003
+6;J9600;Acute respiratory failure, unsp w hypoxia or hypercapnia;80+;0.367;0.000
+7;R572;Septic shock;18-64;0.331;0.016
+8;J80;Acute respiratory distress syndrome;18-64;0.324;0.014
+9;J152;Pneumonia due to staphylococcus;65-79;0.240;0.044
+10;J9601;Acute respiratory failure with hypoxia;80+;0.232;0.000
+11;C920;Acute myeloblastic leukaemia;18-64;0.231;0.012
+12;J9600;Acute respiratory failure, unsp w hypoxia or hypercapnia;65-79;0.229;0.055
+13;I5019;Left ventricular failure: Unspecified;80+;0.225;0.000
+14;J690;Pneumonitis due to inhalation of food and vomit;80+;0.192;0.000
+15;J9600;Acute respiratory failure, unsp w hypoxia or hypercapnia;18-64;0.184;0.040
+16;J9601;Acute respiratory failure with hypoxia;65-79;0.180;0.028
+17;J690;Pneumonitis due to inhalation of food and vomit;65-79;0.179;0.069
+18;I5009;"Congestive heart failure, with left ventricular ejection fraction [LVEF]
+unspecified";80+;0.175;0.000
+19;C341;Malignant neoplasm: Upper lobe, bronchus or lung;65-79;0.170;0.000
+20;U0710;COVID-19, confirmed;80+;0.170;0.000
+21;S7200;Fracture of neck of femur: Part unspecified ;80+;0.149;0.000
+22;J158;Pneumonia due to other specified bacteria;80+;0.131;0.000
+23;J13;Pneumonia due to Streptococcus pneumoniae;80+;0.117;0.000
+24;S7210;Fracture of femur: Trochanteric fracture, unspecified;80+;0.115;0.000
+25;J159;Unspecified bacterial pneumonia;80+;0.113;0.000
+26;C341;Malignant neoplasm: Upper lobe, bronchus or lung;18-64;0.110;0.005
+27;I501;Left ventricular failure, unspecified;80+;0.103;0.000
+28;I509;Heart failure, unspecified;80+;0.101;0.000
+29;J181;Lobar pneumonia, unspecified organism;80+;0.101;0.000
+30;J188;Other pneumonia, unspecified organism;80+;0.101;0.000
+31;J690;Pneumonitis due to inhalation of food and vomit;18-64;0.100;0.032
+32;J9601;Acute respiratory failure with hypoxia;18-64;0.100;0.036
+33;I269;Pulmonary embolism without acute cor pulmonale;80+;0.100;0.000
+34;J100;Influenza with pneumonia, seasonal influenza virus identified;80+;0.099;0.000
+35;I500;Congestive heart failure;80+;0.098;0.000
+36;U0710;COVID-19, confirmed;65-79;0.095;0.007
+37;I5000;NA;80+;0.089;0.000
+38;N10;Acute pyelonephritis;80+;0.079;0.000
+39;I500;Congestive heart failure;65-79;0.078;0.010
+40;J159;Unspecified bacterial pneumonia;65-79;0.077;0.017
+41;J440;Chr obstructive pulmon disease with (acute) lower resp infct;80+;0.075;0.000
+42;I5000;NA;65-79;0.074;0.009
+43;J180;Bronchopneumonia, unspecified organism;80+;0.073;0.000
+44;I5010;NA;80+;0.073;0.000
+45;J189;Pneumonia, unspecified organism;80+;0.064;0.000
+46;J101;Flu due to oth ident influenza virus w oth resp manifest;80+;0.064;0.000
+47;J869;Pyothorax without fistula;65-79;0.062;0.024
+48;J108;Influenza with other manifestations, seasonal influenza virus identified;80+;0.062;0.000
+49;J180;Bronchopneumonia, unspecified organism;65-79;0.061;0.005
+50;I269;Pulmonary embolism without acute cor pulmonale;65-79;0.061;0.024
+51;J13;Pneumonia due to Streptococcus pneumoniae;65-79;0.060;0.000
+52;J151;Pneumonia due to Pseudomonas;65-79;0.059;0.014
+53;J152;Pneumonia due to staphylococcus;18-64;0.057;0.012
+54;I509;Heart failure, unspecified;65-79;0.053;0.002
+55;J121;Respiratory syncytial virus pneumonia;80+;0.052;0.000
+56;J100;Influenza with pneumonia, seasonal influenza virus identified;65-79;0.050;0.000
+57;I5001;NA;80+;0.050;0.000
+58;J14;Pneumonia due to Hemophilus influenzae;65-79;0.049;0.000
+59;I501;Left ventricular failure, unspecified;65-79;0.045;0.000
+60;J441;Chronic obstructive pulmonary disease w (acute) exacerbation;80+;0.045;0.000
+61;J181;Lobar pneumonia, unspecified organism;65-79;0.038;0.025
+62;T796;Traumatic ischemia of muscle, initial encounter;80+;0.037;0.000
+63;J440;Chr obstructive pulmon disease with (acute) lower resp infct;65-79;0.033;0.002
+64;J13;Pneumonia due to Streptococcus pneumoniae;18-64;0.031;0.005
+65;J159;Unspecified bacterial pneumonia;18-64;0.031;0.023
+66;N390;Urinary tract infection, site not specified;80+;0.030;0.000
+67;J09;Influenza due to ident novel influenza A virus w pneumonia;80+;0.029;0.000
+68;U0710;COVID-19, confirmed;18-64;0.028;0.000
+69;J441;Chronic obstructive pulmonary disease w (acute) exacerbation;65-79;0.027;0.005
+70;J869;Pyothorax without fistula;18-64;0.026;0.000
+71;J188;Other pneumonia, unspecified organism;65-79;0.025;0.008
+72;J14;Pneumonia due to Hemophilus influenzae;18-64;0.025;0.000
+73;J101;Flu due to oth ident influenza virus w oth resp manifest;65-79;0.024;0.000
+74;J158;Pneumonia due to other specified bacteria;18-64;0.022;0.004
+75;J151;Pneumonia due to Pseudomonas;18-64;0.020;0.000
+76;J440;Chr obstructive pulmon disease with (acute) lower resp infct;18-64;0.020;0.004
+77;J180;Bronchopneumonia, unspecified organism;18-64;0.018;0.000
+78;Z942;NA;18-64;0.018;0.000
+79;J189;Pneumonia, unspecified organism;65-79;0.017;0.034
+80;J181;Lobar pneumonia, unspecified organism;18-64;0.016;0.012
+81;J100;Influenza with pneumonia, seasonal influenza virus identified;18-64;0.016;0.000
+82;I269;Pulmonary embolism without acute cor pulmonale;18-64;0.016;0.008
+83;J188;Other pneumonia, unspecified organism;18-64;0.015;0.015
+84;J158;Pneumonia due to other specified bacteria;65-79;0.015;0.015
+85;Z511;Chemotherapy session for neoplasm;18-64;0.014;0.000
+86;J09;Influenza due to ident novel influenza A virus w pneumonia;65-79;0.013;0.000
+87;J441;Chronic obstructive pulmonary disease w (acute) exacerbation;18-64;0.012;0.009
+88;J9600;Acute respiratory failure, unsp w hypoxia or hypercapnia;0-1;0.009;0.000
+89;J108;Influenza with other manifestations, seasonal influenza virus identified;65-79;0.009;0.000
+90;J211;Acute bronchiolitis due to human metapneumovirus;0-1;0.008;0.000
+91;J209;Acute bronchitis, unspecified;80+;0.006;0.000
+92;U0711;COVID-19, unconfirmed;18-64;0.004;0.000
+93;J189;Pneumonia, unspecified organism;18-64;0.003;0.015
+94;J209;Acute bronchitis, unspecified;65-79;0.003;0.013
+95;J108;Influenza with other manifestations, seasonal influenza virus identified;18-64;0.002;0.000
+96;J189;Pneumonia, unspecified organism;5-17;0.002;0.000
+97;J09;Influenza due to ident novel influenza A virus w pneumonia;18-64;0.001;0.000
+98;J118;Influenza with other manifestations, virus not identified;18-64;0.001;0.000
+99;J189;Pneumonia, unspecified organism;0-1;0.001;0.000
+100;J189;Pneumonia, unspecified organism;2-4;0.001;0.000
+101;J00;Acute nasopharyngitis [common cold];0-1;0.000;0.000
+102;J09;Influenza due to ident novel influenza A virus w pneumonia;0-1;0.000;0.000
+103;J101;Flu due to oth ident influenza virus w oth resp manifest;0-1;0.000;0.000
+104;J108;Influenza with other manifestations, seasonal influenza virus identified;0-1;0.000;0.000
+105;J111;Flu due to unidentified influenza virus w oth resp manifest;0-1;0.000;0.023
+106;J118;Influenza with other manifestations, virus not identified;0-1;0.000;0.000
+107;J128;Other viral pneumonia;0-1;0.000;0.000
+108;J159;Unspecified bacterial pneumonia;0-1;0.000;0.000
+109;J209;Acute bronchitis, unspecified;0-1;0.000;0.000
+110;J210;Acute bronchiolitis due to respiratory syncytial virus;0-1;0.000;0.000
+111;J218;Acute bronchiolitis due to other specified organisms;0-1;0.000;0.000
+112;J219;Acute bronchiolitis, unspecified;0-1;0.000;0.000
+113;J459;Asthma, unspecified;0-1;0.000;0.000
+114;J46;Status asthmaticus;0-1;0.000;0.005
+115;U0710;COVID-19, confirmed;0-1;0.000;0.000
+116;J108;Influenza with other manifestations, seasonal influenza virus identified;2-4;0.000;0.000
+117;J111;Flu due to unidentified influenza virus w oth resp manifest;2-4;0.000;0.000
+118;J118;Influenza with other manifestations, virus not identified;2-4;0.000;0.000
+119;J209;Acute bronchitis, unspecified;2-4;0.000;0.022
+120;J219;Acute bronchiolitis, unspecified;2-4;0.000;0.000
+121;J459;Asthma, unspecified;2-4;0.000;0.000
+122;J108;Influenza with other manifestations, seasonal influenza virus identified;5-17;0.000;0.000
+123;J111;Flu due to unidentified influenza virus w oth resp manifest;5-17;0.000;0.000
+124;J118;Influenza with other manifestations, virus not identified;5-17;0.000;0.000
+125;J151;Pneumonia due to Pseudomonas;5-17;0.000;0.000
+126;J157;Pneumonia due to Mycoplasma pneumoniae;5-17;0.000;0.000
+127;J159;Unspecified bacterial pneumonia;5-17;0.000;0.000
+128;J209;Acute bronchitis, unspecified;5-17;0.000;0.000
+129;D570;NA;18-64;0.000;0.000
+130;J101;Flu due to oth ident influenza virus w oth resp manifest;18-64;0.000;0.000
+131;J111;Flu due to unidentified influenza virus w oth resp manifest;18-64;0.000;0.000
+132;J157;Pneumonia due to Mycoplasma pneumoniae;18-64;0.000;0.000
+133;J209;Acute bronchitis, unspecified;18-64;0.000;0.006
+134;Z511;Chemotherapy session for neoplasm;65-79;0.000;0.000

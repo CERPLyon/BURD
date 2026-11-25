@@ -1,0 +1,72 @@
+V1;Rank;Contribution;Variable;Description
+InfluenzaA;1;0.262;J09;ICD-10: Influenza due to identified novel influenza A virus with pneumonia
+"";2;0.184;J100;ICD-10: Influenza with pneumonia, seasonal influenza virus identified
+"";3;0.089;J101;ICD-10: Flu due to other identified influenza virus with other respiratory manifestation
+"";4;0.087;J108;ICD-10: Influenza with other manifestations, seasonal influenza virus identified
+"";5;0.042;relativeWeek;Week relative to December 31st
+"";6;0.041;Season;Runs from September to August
+"";7;0.027;J118;ICD-10: Influenza with other manifestations, virus not identified
+"";8;0.018;J111;ICD-10: Flu due to unidentified influenza virus with other respiratory manifestation
+InfluenzaB;1;0.216;Season;Runs from September to August
+"";2;0.072;J101;ICD-10: Flu due to other identified influenza virus with other respiratory manifestation
+"";3;0.069;J108;ICD-10: Influenza with other manifestations, seasonal influenza virus identified
+"";4;0.067;relativeWeek;Week relative to December 31st
+"";5;0.063;J100;ICD-10: Influenza with pneumonia, seasonal influenza virus identified
+"";6;0.041;J09;ICD-10: Influenza due to identified novel influenza A virus with pneumonia
+"";7;0.037;Age group;
+"";8;0.019;J118;ICD-10: Influenza with other manifestations, virus not identified
+SARS-CoV-2;1;0.705;U0710;ICD-10: COVID-19, confirmed
+"";2;0.019;Season;Runs from September to August
+RSV;1;0.447;J210;ICD-10: Acute bronchiolitis due to respiratory syncytial virus
+"";2;0.129;J121;ICD-10: Respiratory syncytial virus pneumonia
+"";3;0.060;relativeWeek;Week relative to December 31st
+"";4;0.053;J205;ICD-10: Acute bronchitis due to respiratory syncytial virus
+"";5;0.031;Age group;
+"";6;0.024;Season;Runs from September to August
+"";7;0.019;B974;ICD-10: Respiratory syncytial virus causing diseases classified elsewhere
+"";8;0.018;J219;ICD-10: Acute bronchiolitis, unspecified
+hMPV;1;0.319;J123;ICD-10: Human metapneumovirus pneumonia
+"";2;0.225;J211;ICD-10: Acute bronchiolitis due to human metapneumovirus
+"";3;0.052;relativeWeek;Week relative to December 31st
+"";4;0.026;Season;Runs from September to August
+"";5;0.019;J208;ICD-10: Acute bronchitis due to other specified organisms
+RVEV;1;0.116;J206;ICD-10: Acute bronchitis due to rhinovirus
+"";2;0.066;relativeWeek;Week relative to December 31st
+"";3;0.059;Age group;
+"";4;0.052;J218;ICD-10: Acute bronchiolitis due to other specified organisms
+"";5;0.033;J128;ICD-10: Other viral pneumonia
+"";6;0.031;Season;Runs from September to August
+ADV;1;0.289;J120;ICD-10: Adenoviral pneumonia
+"";2;0.045;Age group;
+"";3;0.042;relativeWeek;Week relative to December 31st
+"";4;0.033;Season;Runs from September to August
+"";5;0.027;CRP_min;C-reactive protein - minimum
+"";6;0.017;LYMP_min;Lymphocytes - minimum
+"";7;0.017;GLUC_min;Glucose - minimum
+PIV;1;0.201;J122;ICD-10: Parainfluenza virus pneumonia
+"";2;0.089;relativeWeek;Week relative to December 31st
+"";3;0.034;J218;ICD-10: Acute bronchiolitis due to other specified organisms
+"";4;0.029;Season;Runs from September to August
+"";5;0.018;CRP_max;C-reactive protein - maximum
+"";6;0.018;Age group;
+"";7;0.017;EOSI_mean;
+"";8;0.016;PLAQ_max;Platelets - maximum
+hCoV;1;0.261;relativeWeek;Week relative to December 31st
+"";2;0.233;Season;Runs from September to August
+"";3;0.086;LYMP_min;Lymphocytes - minimum
+"";4;0.058;PCO2_max;pCO2 - maximum
+"";5;0.025;LACT_min;
+"";6;0.025;PH_mean;pH - mean
+"";7;0.025;CRP_min;C-reactive protein - minimum
+"";8;0.025;FIBR_min;Fibrinogen - minimum
+"";9;0.024;PO2_mean;pO2 - mean
+"";10;0.023;GLUC_n;
+"";11;0.022;PCT_min;
+"";12;0.020;J128;ICD-10: Other viral pneumonia
+"";13;0.020;PCO2_n;
+"";14;0.020;FIBR_mean;
+"";15;0.020;PH_max;
+"";16;0.019;CREA_min;Creatinine - minimum
+"";17;0.018;NEUT_mean;
+"";18;0.016;MYEL_n;Myelaemia - number of observations
+"";19;0.016;U0710;ICD-10: COVID-19, confirmed
